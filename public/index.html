@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Outreach Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Contact Outreach Manager</h1>
+      <div class="header-actions">
+        <button id="addContactBtn" class="btn btn-primary">Add New Contact</button>
+        <button id="settingsBtn" class="btn btn-secondary">Settings</button>
+      </div>
+    </header>
+
+    <div class="search-filter">
+      <input type="text" id="searchInput" placeholder="Search contacts...">
+    </div>
+
+    <div class="table-container">
+      <table id="contactsTable">
+        <thead>
+          <tr>
+            <th data-sort="name">Name <span class="sort-arrow">↕</span></th>
+            <th data-sort="company">Company <span class="sort-arrow">↕</span></th>
+            <th data-sort="title">Title <span class="sort-arrow">↕</span></th>
+            <th data-sort="lastContact">Date of Last Contact <span class="sort-arrow">↕</span></th>
+            <th data-sort="tag">Tag <span class="sort-arrow">↕</span></th>
+            <th data-sort="followUpDate">Follow-up Date <span class="sort-arrow">↕</span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="contactsTableBody">
+          <!-- Contacts will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <p>No contacts found. Click "Add New Contact" to get started.</p>
+    </div>
+  </div>
+
+  <!-- Add/Edit Contact Modal -->
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Contact</h2>
+        <span class="close">&times;</span>
+      </div>
+      <form id="contactForm">
+        <div class="form-group">
+          <label for="contactName">Name *</label>
+          <input type="text" id="contactName" required>
+        </div>
+        <div class="form-group">
+          <label for="contactCompany">Company</label>
+          <input type="text" id="contactCompany">
+        </div>
+        <div class="form-group">
+          <label for="contactTitle">Title</label>
+          <input type="text" id="contactTitle">
+        </div>
+        <div class="form-group">
+          <label for="contactTag">Tag</label>
+          <select id="contactTag">
+            <option value="no action">No Action</option>
+            <option value="follow up">Follow Up</option>
+            <option value="waiting for response">Waiting for Response</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="contactFollowUpDate">Follow-up Date</label>
+          <input type="date" id="contactFollowUpDate">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Contact</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Email Notification Settings</h2>
+        <span class="close">&times;</span>
+      </div>
+      <form id="settingsForm">
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="emailEnabled">
+            Enable Email Notifications
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="notificationEmail">Your Email Address</label>
+          <input type="email" id="notificationEmail">
+          <small>Email address where follow-up reminders will be sent</small>
+        </div>
+        <h3>SMTP Configuration</h3>
+        <div class="form-group">
+          <label for="smtpHost">SMTP Host</label>
+          <input type="text" id="smtpHost" placeholder="smtp.gmail.com">
+        </div>
+        <div class="form-group">
+          <label for="smtpPort">SMTP Port</label>
+          <input type="number" id="smtpPort" placeholder="587">
+        </div>
+        <div class="form-group">
+          <label for="smtpUser">SMTP Username</label>
+          <input type="text" id="smtpUser">
+        </div>
+        <div class="form-group">
+          <label for="smtpPass">SMTP Password</label>
+          <input type="password" id="smtpPass">
+        </div>
+        <div class="info-box">
+          <p><strong>Note:</strong> For Gmail, you'll need to use an App Password. Go to your Google Account settings > Security > 2-Step Verification > App passwords to generate one.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
