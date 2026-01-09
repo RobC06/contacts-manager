@@ -78,8 +78,12 @@ function populateContactForm() {
   document.getElementById('contactName').value = contact.name;
   document.getElementById('contactCompany').value = contact.company || '';
   document.getElementById('contactTitle').value = contact.title || '';
+  document.getElementById('contactEmail').value = contact.email || '';
+  document.getElementById('contactComments').value = contact.comments || '';
   document.getElementById('contactTag').value = contact.tag;
   document.getElementById('contactFollowUpDate').value = contact.followUpDate || '';
+  document.getElementById('contactFollowUpRequired').checked = contact.followUpRequired || false;
+  document.getElementById('contactFollowUpNotes').value = contact.followUpNotes || '';
 
   // Set last contact date
   const lastContactDate = getLastContactDate();
@@ -134,8 +138,12 @@ async function saveContact(event) {
     name: document.getElementById('contactName').value,
     company: document.getElementById('contactCompany').value,
     title: document.getElementById('contactTitle').value,
+    email: document.getElementById('contactEmail').value,
+    comments: document.getElementById('contactComments').value,
     tag: document.getElementById('contactTag').value,
-    followUpDate: document.getElementById('contactFollowUpDate').value || null
+    followUpDate: document.getElementById('contactFollowUpDate').value || null,
+    followUpRequired: document.getElementById('contactFollowUpRequired').checked,
+    followUpNotes: document.getElementById('contactFollowUpNotes').value
   };
 
   try {

@@ -217,8 +217,12 @@ app.post('/api/contacts', requireAuth, (req, res) => {
       name: req.body.name || '',
       company: req.body.company || '',
       title: req.body.title || '',
+      email: req.body.email || '',
+      comments: req.body.comments || '',
       tag: req.body.tag || 'no action',
       followUpDate: req.body.followUpDate || null,
+      followUpRequired: req.body.followUpRequired || false,
+      followUpNotes: req.body.followUpNotes || '',
       communications: req.body.communications || [],
       createdAt: new Date().toISOString()
     };
@@ -314,8 +318,12 @@ app.post('/api/contacts/import', requireAuth, (req, res) => {
         name: contactData.name || '',
         company: contactData.company || '',
         title: contactData.title || '',
+        email: contactData.email || '',
+        comments: contactData.comments || '',
         tag: contactData.tag || 'no action',
         followUpDate: contactData.followUpDate || null,
+        followUpRequired: contactData.followUpRequired || false,
+        followUpNotes: contactData.followUpNotes || '',
         communications: contactData.communications || [],
         createdAt: new Date().toISOString()
       };

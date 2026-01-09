@@ -217,8 +217,12 @@ async function saveContact(event) {
     name: document.getElementById('contactName').value,
     company: document.getElementById('contactCompany').value,
     title: document.getElementById('contactTitle').value,
+    email: document.getElementById('contactEmail').value,
+    comments: document.getElementById('contactComments').value,
     tag: document.getElementById('contactTag').value,
     followUpDate: document.getElementById('contactFollowUpDate').value || null,
+    followUpRequired: document.getElementById('contactFollowUpRequired').checked,
+    followUpNotes: document.getElementById('contactFollowUpNotes').value,
     communications: []
   };
 

@@ -39,12 +39,22 @@
               <input type="text" id="contactTitle">
             </div>
             <div class="form-group">
+              <label for="contactEmail">Email</label>
+              <input type="email" id="contactEmail">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label for="contactTag">Tag</label>
               <select id="contactTag">
                 <option value="no action">No Action</option>
                 <option value="follow up">Follow Up</option>
                 <option value="waiting for response">Waiting for Response</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label>Date of Last Contact</label>
+              <input type="text" id="lastContactDate" readonly>
             </div>
           </div>
           <div class="form-row">
@@ -53,9 +63,19 @@
               <input type="date" id="contactFollowUpDate">
             </div>
             <div class="form-group">
-              <label>Date of Last Contact</label>
-              <input type="text" id="lastContactDate" readonly>
+              <label>
+                <input type="checkbox" id="contactFollowUpRequired">
+                Follow-up Required?
+              </label>
             </div>
+          </div>
+          <div class="form-group">
+            <label for="contactFollowUpNotes">Follow-up Notes</label>
+            <textarea id="contactFollowUpNotes" rows="3" placeholder="Notes for the follow-up..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="contactComments">Comments</label>
+            <textarea id="contactComments" rows="4" placeholder="General comments about this contact..."></textarea>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save Changes</button>

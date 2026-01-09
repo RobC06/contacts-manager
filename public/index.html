@@ -67,6 +67,10 @@
           <input type="text" id="contactTitle">
         </div>
         <div class="form-group">
+          <label for="contactEmail">Email</label>
+          <input type="email" id="contactEmail">
+        </div>
+        <div class="form-group">
           <label for="contactTag">Tag</label>
           <select id="contactTag">
             <option value="no action">No Action</option>
@@ -77,6 +81,20 @@
         <div class="form-group">
           <label for="contactFollowUpDate">Follow-up Date</label>
           <input type="date" id="contactFollowUpDate">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="contactFollowUpRequired">
+            Follow-up Required?
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="contactFollowUpNotes">Follow-up Notes</label>
+          <textarea id="contactFollowUpNotes" rows="2" placeholder="Notes for the follow-up..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="contactComments">Comments</label>
+          <textarea id="contactComments" rows="3" placeholder="General comments..."></textarea>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>

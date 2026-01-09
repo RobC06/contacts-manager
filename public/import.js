@@ -176,8 +176,12 @@ function parseCSV(content) {
       name: values[headerMap.name]?.trim() || '',
       company: values[headerMap.company]?.trim() || '',
       title: values[headerMap.title]?.trim() || '',
+      email: values[headerMap.email]?.trim() || '',
+      comments: values[headerMap.comments]?.trim() || '',
       tag: normalizeTag(values[headerMap.tag]?.trim() || ''),
       followUpDate: parseDate(values[headerMap.followUpDate]?.trim() || ''),
+      followUpRequired: parseBoolean(values[headerMap.followUpRequired]?.trim() || ''),
+      followUpNotes: values[headerMap.followUpNotes]?.trim() || '',
       communications: []
     };
 
@@ -233,10 +237,18 @@ function detectColumns(headers) {
   const companyVariations = ['company', 'company name', 'organization', 'org', 'business'];
   // Title variations
   const titleVariations = ['title', 'job title', 'position', 'role'];
+  // Email variations
+  const emailVariations = ['email', 'e-mail', 'email address', 'contact email'];
+  // Comments variations
+  const commentsVariations = ['comments', 'comment', 'notes', 'note', 'description'];
   // Tag variations
   const tagVariations = ['tag', 'status', 'stage', 'state'];
   // Date variations
   const dateVariations = ['follow-up date', 'follow up date', 'followup date', 'next contact', 'date'];
+  // Follow-up required variations
+  const followUpRequiredVariations = ['follow-up?', 'follow up?', 'followup?', 'needs follow up', 'follow up required'];
+  // Follow-up notes variations
+  const followUpNotesVariations = ['follow-up notes', 'follow up notes', 'followup notes', 'next steps'];
 
   headers.forEach((header, index) => {
     const headerLower = header.toLowerCase().trim();
@@ -247,10 +259,18 @@ function detectColumns(headers) {
       map.company = index;
     } else if (!map.title && titleVariations.some(v => headerLower.includes(v))) {
       map.title = index;
+    } else if (!map.email && emailVariations.some(v => headerLower.includes(v))) {
+      map.email = index;
+    } else if (!map.comments && commentsVariations.some(v => headerLower.includes(v))) {
+      map.comments = index;
     } else if (!map.tag && tagVariations.some(v => headerLower.includes(v))) {
       map.tag = index;
     } else if (!map.followUpDate && dateVariations.some(v => headerLower.includes(v))) {
       map.followUpDate = index;
+    } else if (!map.followUpRequired && followUpRequiredVariations.some(v => headerLower.includes(v) || headerLower === v)) {
+      map.followUpRequired = index;
+    } else if (!map.followUpNotes && followUpNotesVariations.some(v => headerLower.includes(v))) {
+      map.followUpNotes = index;
     }
   });
 
@@ -289,6 +309,20 @@ function parseDate(dateStr) {
   }
 
   return null;
+}
+
+// Parse boolean (handles various formats)
+function parseBoolean(value) {
+  if (!value) return false;
+
+  const valueLower = value.toLowerCase().trim();
+
+  // Check for truthy values
+  if (['yes', 'y', 'true', '1', 'x', 'checked'].includes(valueLower)) {
+    return true;
+  }
+
+  return false;
 }
 
 // Show preview
