@@ -1,4 +1,5 @@
 {
+  "passwordHash": null,
   "emailEnabled": false,
   "notificationEmail": "",
   "smtpConfig": {

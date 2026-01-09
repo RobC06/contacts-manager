@@ -15,9 +15,36 @@ const emptyState = document.getElementById('emptyState');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
   loadContacts();
   setupEventListeners();
 });
+
+// Check authentication status
+async function checkAuth() {
+  try {
+    const response = await fetch('/api/auth/status');
+    const data = await response.json();
+
+    if (!data.authenticated) {
+      window.location.href = '/';
+    }
+  } catch (error) {
+    console.error('Auth check failed:', error);
+    window.location.href = '/';
+  }
+}
+
+// Logout
+async function logout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/';
+  } catch (error) {
+    console.error('Logout failed:', error);
+    alert('Failed to logout');
+  }
+}
 
 // Load contacts from API
 async function loadContacts() {
@@ -290,6 +317,9 @@ function setupEventListeners() {
     loadSettings();
     settingsModal.style.display = 'block';
   });
+
+  // Logout button
+  document.getElementById('logoutBtn').addEventListener('click', logout);
 
   // Contact form submit
   contactForm.addEventListener('submit', saveContact);

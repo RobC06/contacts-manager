@@ -23,9 +23,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  checkAuth();
   loadContact();
   setupEventListeners();
 });
+
+// Check authentication status
+async function checkAuth() {
+  try {
+    const response = await fetch('/api/auth/status');
+    const data = await response.json();
+
+    if (!data.authenticated) {
+      window.location.href = '/';
+    }
+  } catch (error) {
+    console.error('Auth check failed:', error);
+    window.location.href = '/';
+  }
+}
+
+// Logout
+async function logout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/';
+  } catch (error) {
+    console.error('Logout failed:', error);
+    alert('Failed to logout');
+  }
+}
 
 // Load contact data
 async function loadContact() {
@@ -218,6 +245,9 @@ function setupEventListeners() {
 
   // Delete contact button
   deleteContactBtn.addEventListener('click', deleteContactHandler);
+
+  // Logout button
+  document.getElementById('logoutBtn').addEventListener('click', logout);
 
   // Modal close button
   document.querySelectorAll('.close').forEach(closeBtn => {

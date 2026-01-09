@@ -4,13 +4,24 @@ const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'contact-manager-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Data file path
 const DATA_DIR = path.join(__dirname, 'data');
@@ -30,6 +41,7 @@ if (!fs.existsSync(CONTACTS_FILE)) {
 // Initialize config file if it doesn't exist
 if (!fs.existsSync(CONFIG_FILE)) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify({
+    passwordHash: null,
     emailEnabled: false,
     notificationEmail: '',
     smtpConfig: {
@@ -63,10 +75,117 @@ function writeConfig(config) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
-// API Routes
+// Authentication middleware
+function requireAuth(req, res, next) {
+  if (req.session && req.session.authenticated) {
+    return next();
+  }
+  res.status(401).json({ error: 'Unauthorized' });
+}
+
+// Check if setup is needed
+function isSetupNeeded() {
+  const config = readConfig();
+  return !config.passwordHash;
+}
+
+// Authentication Routes
+
+// Check auth status
+app.get('/api/auth/status', (req, res) => {
+  res.json({
+    authenticated: req.session && req.session.authenticated,
+    setupNeeded: isSetupNeeded()
+  });
+});
+
+// Setup password (first-time only)
+app.post('/api/auth/setup', async (req, res) => {
+  try {
+    if (!isSetupNeeded()) {
+      return res.status(400).json({ error: 'Setup already completed' });
+    }
+
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const config = readConfig();
+    config.passwordHash = passwordHash;
+    writeConfig(config);
+
+    req.session.authenticated = true;
+    res.json({ message: 'Setup completed successfully' });
+  } catch (error) {
+    console.error('Setup error:', error);
+    res.status(500).json({ error: 'Failed to complete setup' });
+  }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const config = readConfig();
+
+    if (!config.passwordHash) {
+      return res.status(400).json({ error: 'Setup required' });
+    }
+
+    const isValid = await bcrypt.compare(password, config.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    req.session.authenticated = true;
+    res.json({ message: 'Login successful' });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    res.json({ message: 'Logout successful' });
+  });
+});
+
+// Change password
+app.post('/api/auth/change-password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const config = readConfig();
+
+    const isValid = await bcrypt.compare(currentPassword, config.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    config.passwordHash = await bcrypt.hash(newPassword, 10);
+    writeConfig(config);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// API Routes (Protected)
 
 // Get all contacts
-app.get('/api/contacts', (req, res) => {
+app.get('/api/contacts', requireAuth, (req, res) => {
   try {
     const contacts = readContacts();
     res.json(contacts);
@@ -76,7 +195,7 @@ app.get('/api/contacts', (req, res) => {
 });
 
 // Get single contact
-app.get('/api/contacts/:id', (req, res) => {
+app.get('/api/contacts/:id', requireAuth, (req, res) => {
   try {
     const contacts = readContacts();
     const contact = contacts.find(c => c.id === req.params.id);
@@ -90,7 +209,7 @@ app.get('/api/contacts/:id', (req, res) => {
 });
 
 // Create new contact
-app.post('/api/contacts', (req, res) => {
+app.post('/api/contacts', requireAuth, (req, res) => {
   try {
     const contacts = readContacts();
     const newContact = {
@@ -112,7 +231,7 @@ app.post('/api/contacts', (req, res) => {
 });
 
 // Update contact
-app.put('/api/contacts/:id', (req, res) => {
+app.put('/api/contacts/:id', requireAuth, (req, res) => {
   try {
     const contacts = readContacts();
     const index = contacts.findIndex(c => c.id === req.params.id);
@@ -134,7 +253,7 @@ app.put('/api/contacts/:id', (req, res) => {
 });
 
 // Delete contact
-app.delete('/api/contacts/:id', (req, res) => {
+app.delete('/api/contacts/:id', requireAuth, (req, res) => {
   try {
     const contacts = readContacts();
     const filteredContacts = contacts.filter(c => c.id !== req.params.id);
@@ -149,7 +268,7 @@ app.delete('/api/contacts/:id', (req, res) => {
 });
 
 // Add communication to contact
-app.post('/api/contacts/:id/communications', (req, res) => {
+app.post('/api/contacts/:id/communications', requireAuth, (req, res) => {
   try {
     const contacts = readContacts();
     const contact = contacts.find(c => c.id === req.params.id);
@@ -174,7 +293,7 @@ app.post('/api/contacts/:id/communications', (req, res) => {
 });
 
 // Get config
-app.get('/api/config', (req, res) => {
+app.get('/api/config', requireAuth, (req, res) => {
   try {
     const config = readConfig();
     // Don't send password to frontend
@@ -195,7 +314,7 @@ app.get('/api/config', (req, res) => {
 });
 
 // Update config
-app.put('/api/config', (req, res) => {
+app.put('/api/config', requireAuth, (req, res) => {
   try {
     const currentConfig = readConfig();
     const newConfig = {
@@ -263,9 +382,18 @@ cron.schedule('0 9 * * *', () => {
   });
 });
 
-// Serve index.html for the root route
+// Serve static files (login, setup pages)
+app.use(express.static('public'));
+
+// Serve appropriate page based on auth status
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  if (isSetupNeeded()) {
+    res.sendFile(path.join(__dirname, 'public', 'setup.html'));
+  } else if (!req.session || !req.session.authenticated) {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  } else {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
 });
 
 // Start server
