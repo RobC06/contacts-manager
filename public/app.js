@@ -312,6 +312,11 @@ function setupEventListeners() {
   // Add contact button
   addContactBtn.addEventListener('click', openAddContactModal);
 
+  // Import contacts button
+  document.getElementById('importContactsBtn').addEventListener('click', () => {
+    window.location.href = 'import.html';
+  });
+
   // Settings button
   settingsBtn.addEventListener('click', () => {
     loadSettings();

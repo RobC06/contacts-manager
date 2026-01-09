@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import Contacts - Contact Outreach Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-nav">
+        <a href="index.html" class="back-link">← Back to Contacts</a>
+      </div>
+      <h1>Import Contacts</h1>
+      <div class="header-actions">
+        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+      </div>
+    </header>
+
+    <div class="import-container">
+      <!-- Instructions Section -->
+      <div class="instructions-section">
+        <h2>📋 How to Import from Monday.com</h2>
+        <div class="instruction-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Export from Monday.com</h3>
+              <ul>
+                <li>Open your Monday.com board with contacts</li>
+                <li>Click the <strong>three dots menu (⋯)</strong> in the top right corner</li>
+                <li>Select <strong>"Export board to Excel"</strong></li>
+                <li>Download the Excel file to your computer</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Convert to CSV (if needed)</h3>
+              <ul>
+                <li>Open the downloaded Excel file</li>
+                <li>Go to <strong>File → Save As</strong></li>
+                <li>Choose <strong>"CSV (Comma delimited) (*.csv)"</strong> as the file type</li>
+                <li>Save the file</li>
+              </ul>
+              <p class="note"><strong>Note:</strong> You can also upload the Excel file directly!</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Upload Your File</h3>
+              <p>Use the file uploader below to import your contacts. We support:</p>
+              <ul>
+                <li>CSV files (.csv)</li>
+                <li>Excel files (.xlsx, .xls)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="format-guide">
+          <h3>📊 Required CSV Format</h3>
+          <p>Your file should have these column headers:</p>
+          <div class="format-example">
+            <code>Name, Company, Title, Tag, Follow-up Date</code>
+          </div>
+          <p class="format-note">
+            <strong>Column Mapping:</strong> We'll automatically detect columns like "Contact Name", "Full Name",
+            "Company Name", "Organization", "Job Title", "Status", etc. The importer is flexible!
+          </p>
+          <div class="example-data">
+            <h4>Example:</h4>
+            <table class="example-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Company</th>
+                  <th>Title</th>
+                  <th>Tag</th>
+                  <th>Follow-up Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>John Doe</td>
+                  <td>Acme Corp</td>
+                  <td>CEO</td>
+                  <td>follow up</td>
+                  <td>2026-02-15</td>
+                </tr>
+                <tr>
+                  <td>Jane Smith</td>
+                  <td>Tech Inc</td>
+                  <td>CTO</td>
+                  <td>waiting for response</td>
+                  <td>2026-03-01</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="upload-section">
+        <h2>📤 Upload Your File</h2>
+
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden>
+          <div class="upload-content">
+            <div class="upload-icon">📁</div>
+            <p class="upload-text">Drag & drop your CSV or Excel file here</p>
+            <p class="upload-subtext">or</p>
+            <button class="btn btn-primary" id="browseBtn">Browse Files</button>
+            <p class="upload-hint">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+          </div>
+        </div>
+
+        <div id="fileInfo" class="file-info" style="display: none;">
+          <div class="file-details">
+            <span class="file-name" id="fileName"></span>
+            <span class="file-size" id="fileSize"></span>
+          </div>
+          <button class="btn btn-danger btn-sm" id="removeFileBtn">Remove</button>
+        </div>
+
+        <div id="previewSection" class="preview-section" style="display: none;">
+          <h3>Preview (First 5 contacts)</h3>
+          <div id="previewTable" class="preview-table-container"></div>
+          <div class="preview-summary">
+            <p><strong>Total contacts to import:</strong> <span id="totalCount">0</span></p>
+          </div>
+          <div class="import-actions">
+            <button class="btn btn-secondary" id="cancelImportBtn">Cancel</button>
+            <button class="btn btn-success" id="confirmImportBtn">Import Contacts</button>
+          </div>
+        </div>
+
+        <div id="progressSection" class="progress-section" style="display: none;">
+          <h3>Importing...</h3>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <p class="progress-text" id="progressText">Importing contacts...</p>
+        </div>
+
+        <div id="resultSection" class="result-section" style="display: none;">
+          <div class="result-success" id="successResult" style="display: none;">
+            <div class="result-icon">✅</div>
+            <h3>Import Successful!</h3>
+            <p><strong><span id="successCount">0</span> contacts</strong> have been imported.</p>
+            <button class="btn btn-primary" onclick="window.location.href='index.html'">View Contacts</button>
+          </div>
+          <div class="result-error" id="errorResult" style="display: none;">
+            <div class="result-icon">❌</div>
+            <h3>Import Failed</h3>
+            <p id="errorMessage"></p>
+            <button class="btn btn-secondary" onclick="location.reload()">Try Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="import.js"></script>
+</body>
+</html>

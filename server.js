@@ -292,6 +292,49 @@ app.post('/api/contacts/:id/communications', requireAuth, (req, res) => {
   }
 });
 
+// Import contacts in bulk
+app.post('/api/contacts/import', requireAuth, (req, res) => {
+  try {
+    const { contacts: newContacts } = req.body;
+
+    if (!Array.isArray(newContacts) || newContacts.length === 0) {
+      return res.status(400).json({ error: 'No contacts provided' });
+    }
+
+    const existingContacts = readContacts();
+    let importedCount = 0;
+
+    newContacts.forEach(contactData => {
+      if (!contactData.name || !contactData.name.trim()) {
+        return; // Skip contacts without names
+      }
+
+      const newContact = {
+        id: Date.now().toString() + '-' + Math.random().toString(36).substring(7),
+        name: contactData.name || '',
+        company: contactData.company || '',
+        title: contactData.title || '',
+        tag: contactData.tag || 'no action',
+        followUpDate: contactData.followUpDate || null,
+        communications: contactData.communications || [],
+        createdAt: new Date().toISOString()
+      };
+
+      existingContacts.push(newContact);
+      importedCount++;
+    });
+
+    writeContacts(existingContacts);
+    res.status(201).json({
+      message: 'Contacts imported successfully',
+      count: importedCount
+    });
+  } catch (error) {
+    console.error('Import error:', error);
+    res.status(500).json({ error: 'Failed to import contacts' });
+  }
+});
+
 // Get config
 app.get('/api/config', requireAuth, (req, res) => {
   try {
