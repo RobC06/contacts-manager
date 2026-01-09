@@ -173,9 +173,9 @@ function parseCSV(content) {
     if (values.length === 0 || !values[headerMap.name]?.trim()) continue;
 
     const contact = {
-      name: cleanTextValue(values[headerMap.name]?.trim() || ''),
-      company: cleanTextValue(values[headerMap.company]?.trim() || ''),
-      title: cleanTextValue(values[headerMap.title]?.trim() || ''),
+      name: values[headerMap.name]?.trim() || '',
+      company: values[headerMap.company]?.trim() || '',
+      title: values[headerMap.title]?.trim() || '',
       email: values[headerMap.email]?.trim() || '',
       comments: values[headerMap.comments]?.trim() || '',
       tag: normalizeTag(values[headerMap.tag]?.trim() || ''),
@@ -323,35 +323,6 @@ function parseBoolean(value) {
   }
 
   return false;
-}
-
-// Clean text value (prevents Excel date conversion issues)
-function cleanTextValue(value) {
-  if (!value) return '';
-
-  // Check if value looks like an Excel date serial number (e.g., "43891")
-  // Excel date serials are typically 5-digit numbers between 1 and 99999
-  if (/^\d{4,5}$/.test(value)) {
-    // This might be an Excel date serial - convert it back to a date string for display
-    const excelDate = parseInt(value);
-    if (excelDate > 1 && excelDate < 100000) {
-      // Excel date serial: days since 1/1/1900
-      const date = new Date(1900, 0, excelDate - 1);
-      // Return as readable date string instead of serial number
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-  }
-
-  // Check if value is already a date string like "2024-01-09" or "1/9/2024"
-  // If so, convert to readable format
-  const dateCheck = new Date(value);
-  if (!isNaN(dateCheck.getTime()) && (value.includes('/') || value.match(/^\d{4}-\d{2}-\d{2}$/))) {
-    // This looks like a date - return as readable string
-    return dateCheck.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  // Otherwise, return as-is
-  return value;
 }
 
 // Show preview
