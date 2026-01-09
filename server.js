@@ -412,8 +412,8 @@ async function sendFollowUpNotification(contact) {
   }
 }
 
-// Check for follow-ups daily at 9 AM
-cron.schedule('0 9 * * *', () => {
+// Check for follow-ups daily at 7:30 AM Eastern Time
+cron.schedule('30 7 * * *', () => {
   console.log('Checking for follow-ups...');
   const contacts = readContacts();
   const today = new Date().toISOString().split('T')[0];
@@ -423,6 +423,8 @@ cron.schedule('0 9 * * *', () => {
       sendFollowUpNotification(contact);
     }
   });
+}, {
+  timezone: 'America/New_York'
 });
 
 // Serve static files (login, setup pages)
