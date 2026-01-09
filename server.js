@@ -435,10 +435,7 @@ cron.schedule('30 7 * * *', () => {
   timezone: 'America/New_York'
 });
 
-// Serve static files (login, setup pages)
-app.use(express.static('public'));
-
-// Serve appropriate page based on auth status
+// Serve appropriate page based on auth status (MUST come before static middleware)
 app.get('/', (req, res) => {
   if (isSetupNeeded()) {
     res.sendFile(path.join(__dirname, 'public', 'setup.html'));
@@ -448,6 +445,9 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 });
+
+// Serve static files (CSS, JS, images) - comes after root route to prevent bypassing auth
+app.use(express.static('public'));
 
 // Start server
 app.listen(PORT, () => {
