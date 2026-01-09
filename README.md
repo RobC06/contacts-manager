@@ -56,6 +56,111 @@ A secure web application for managing contact outreach with email follow-up remi
    - After setup, you'll be asked to login with your password
    - You can logout anytime using the "Logout" button
 
+## Creating a Desktop Shortcut
+
+For quick access, you can create a desktop shortcut to start the application with one click!
+
+### Windows
+
+**Option 1: Using the Startup Script (Recommended)**
+
+1. Double-click `start.bat` in the project folder to launch the app
+2. To create a desktop shortcut:
+   - Right-click on `start.bat`
+   - Select **"Send to" → "Desktop (create shortcut)"**
+   - Or right-click on `start.bat` → **"Create shortcut"**, then drag the shortcut to your desktop
+
+**Option 2: Manual Shortcut**
+
+1. Right-click on your Desktop → **New → Shortcut**
+2. For the location, enter:
+   ```
+   cmd.exe /c "cd /d C:\Users\YourName\Downloads\RobC06-claude-contact-outreach-manager-wch38 && npm start"
+   ```
+   (Replace the path with your actual project path)
+3. Click **Next**
+4. Name it "Contact Outreach Manager"
+5. Click **Finish**
+6. Right-click the shortcut → **Properties** → Change the icon if desired
+
+### Mac
+
+**Option 1: Using the Startup Script**
+
+1. Open Terminal and navigate to the project folder
+2. Make the script executable (if not already):
+   ```bash
+   chmod +x start.sh
+   ```
+3. Create an Application:
+   - Open **Automator**
+   - Choose **Application**
+   - Add "Run Shell Script" action
+   - Enter:
+     ```bash
+     cd ~/Downloads/RobC06-claude-contact-outreach-manager-wch38
+     ./start.sh
+     ```
+     (Replace with your actual path)
+   - Save as "Contact Outreach Manager.app" to your Desktop
+
+**Option 2: Create a Command File**
+
+1. Open Terminal and navigate to project folder
+2. Create a command file:
+   ```bash
+   echo 'cd "$(dirname "$0")" && ./start.sh' > ~/Desktop/contact-manager.command
+   chmod +x ~/Desktop/contact-manager.command
+   ```
+3. Double-click `contact-manager.command` on your Desktop to launch
+
+### Linux
+
+**Option 1: Create a .desktop File**
+
+1. Create a desktop entry:
+   ```bash
+   nano ~/.local/share/applications/contact-manager.desktop
+   ```
+
+2. Add the following (replace paths with your actual paths):
+   ```ini
+   [Desktop Entry]
+   Type=Application
+   Name=Contact Outreach Manager
+   Comment=Launch Contact Outreach Manager
+   Exec=gnome-terminal -- bash -c "cd ~/Downloads/RobC06-claude-contact-outreach-manager-wch38 && ./start.sh; exec bash"
+   Icon=applications-internet
+   Terminal=true
+   Categories=Office;ContactManagement;
+   ```
+
+3. Make it executable:
+   ```bash
+   chmod +x ~/.local/share/applications/contact-manager.desktop
+   ```
+
+4. The app should now appear in your applications menu
+
+**Option 2: Simple Desktop Shortcut**
+
+1. Copy the startup script to your desktop:
+   ```bash
+   cp ~/Downloads/RobC06-claude-contact-outreach-manager-wch38/start.sh ~/Desktop/contact-manager.sh
+   chmod +x ~/Desktop/contact-manager.sh
+   ```
+
+2. Double-click the script to launch
+
+### All Platforms: Quick Tip
+
+After starting the app via shortcut, it will automatically:
+- Install dependencies if needed (first time only)
+- Start the server
+- Display the URL: http://localhost:3000
+
+Just open your browser and go to that URL!
+
 ## Deploying to the Web
 
 Want to access your contacts from anywhere? See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete instructions on deploying to:
