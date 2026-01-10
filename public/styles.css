@@ -155,6 +155,8 @@ header h1 {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
   transition: box-shadow 0.3s ease;
+  max-width: 98%;
+  margin: 0 auto;
 }
 
 .table-container:hover {
@@ -179,6 +181,7 @@ th {
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+  position: relative;
 }
 
 th:hover {
@@ -202,8 +205,8 @@ th.sorted-desc .sort-arrow::after {
 }
 
 tbody tr {
-  border-top: 1px solid #d1d8dd;
-  border-bottom: 1px solid #d1d8dd;
+  border-top: 1px solid #a8b1ba;
+  border-bottom: 1px solid #a8b1ba;
   transition: background-color 0.2s;
 }
 
@@ -218,6 +221,27 @@ tbody tr:hover {
 
 td {
   padding: 16px;
+}
+
+/* Column resizer */
+.resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  cursor: col-resize;
+  user-select: none;
+  height: 100%;
+  background-color: transparent;
+  z-index: 1;
+}
+
+.resizer:hover {
+  background-color: #1a73e8;
+}
+
+.resizing {
+  background-color: #1a73e8 !important;
 }
 
 /* Tag badges */

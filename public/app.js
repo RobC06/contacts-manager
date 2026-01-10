@@ -468,3 +468,57 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// Column resizing functionality
+function initColumnResizing() {
+  const table = document.getElementById('contactsTable');
+  const headers = table.querySelectorAll('th');
+
+  headers.forEach((header, index) => {
+    // Skip the last column (Actions) and checkbox column
+    if (index === 0 || index === headers.length - 1) return;
+
+    // Create resizer element
+    const resizer = document.createElement('div');
+    resizer.className = 'resizer';
+    header.appendChild(resizer);
+
+    let startX, startWidth;
+
+    resizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent sorting when resizing
+
+      startX = e.pageX;
+      startWidth = header.offsetWidth;
+
+      resizer.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const onMouseMove = (e) => {
+        const width = startWidth + (e.pageX - startX);
+        if (width >= 80) { // Minimum column width
+          header.style.width = width + 'px';
+          header.style.minWidth = width + 'px';
+        }
+      };
+
+      const onMouseUp = () => {
+        resizer.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  });
+}
+
+// Initialize column resizing after the table is rendered
+document.addEventListener('DOMContentLoaded', () => {
+  initColumnResizing();
+});
