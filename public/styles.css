@@ -168,6 +168,9 @@ table {
 }
 
 thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   background-color: #f8f9fa;
 }
 
@@ -181,6 +184,7 @@ th {
   user-select: none;
   white-space: nowrap;
   position: relative;
+  background-color: #f8f9fa;
 }
 
 th:hover {
