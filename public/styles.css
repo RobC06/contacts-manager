@@ -196,7 +196,7 @@ header h1 {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: auto;
-  max-height: 600px;
+  max-height: calc(100vh - 200px);
   transition: box-shadow 0.3s ease;
   width: 100%;
   position: relative;
