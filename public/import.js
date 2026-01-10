@@ -255,8 +255,8 @@ function detectColumns(headers) {
   const emailVariations = ['email', 'e-mail', 'email address', 'contact email'];
   // Comments variations
   const commentsVariations = ['comments', 'comment', 'notes', 'note', 'description'];
-  // Tag variations
-  const tagVariations = ['tag', 'status', 'stage', 'state'];
+  // Tag variations (maps to Follow-up? column)
+  const tagVariations = ['tag', 'status', 'stage', 'state', 'follow-up', 'follow up', 'followup'];
   // Date variations
   const dateVariations = ['follow-up date', 'follow up date', 'followup date', 'next contact', 'date'];
   // Last contact variations
@@ -289,8 +289,6 @@ function detectColumns(headers) {
       map.email = index;
     } else if (map.comments === undefined && commentsVariations.some(v => headerLower.includes(v))) {
       map.comments = index;
-    } else if (map.tag === undefined && tagVariations.some(v => headerLower.includes(v))) {
-      map.tag = index;
     } else if (map.lastContact === undefined && lastContactVariations.some(v => headerLower.includes(v))) {
       console.log(`✓ Matched Last Contact at index ${index}: "${headerLower}"`);
       map.lastContact = index;
@@ -300,6 +298,8 @@ function detectColumns(headers) {
       map.followUpRequired = index;
     } else if (map.followUpNotes === undefined && followUpNotesVariations.some(v => headerLower.includes(v))) {
       map.followUpNotes = index;
+    } else if (map.tag === undefined && tagVariations.some(v => headerLower.includes(v))) {
+      map.tag = index;
     }
   });
 
