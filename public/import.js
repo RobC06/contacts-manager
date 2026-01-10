@@ -253,9 +253,14 @@ function detectColumns(headers) {
   headers.forEach((header, index) => {
     const headerLower = header.toLowerCase().trim();
 
-    if (!map.name && nameVariations.some(v => headerLower.includes(v))) {
-      map.name = index;
-    } else if (!map.company && companyVariations.some(v => headerLower.includes(v))) {
+    // Special handling for name column - match "contact" but not "last contact"
+    if (!map.name) {
+      if (headerLower === 'name' || headerLower === 'contact' || headerLower === 'contact name' || headerLower === 'full name' || headerLower === 'person') {
+        map.name = index;
+      }
+    }
+
+    if (!map.company && companyVariations.some(v => headerLower.includes(v))) {
       map.company = index;
     } else if (!map.title && titleVariations.some(v => headerLower.includes(v))) {
       map.title = index;
