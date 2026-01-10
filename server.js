@@ -100,7 +100,15 @@ app.post('/api/auth/setup', async (req, res) => {
 
     req.session.authenticated = true;
     req.session.userId = user._id;
-    res.json({ message: 'Setup completed successfully' });
+
+    // Explicitly save session to MongoDB before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
+      res.json({ message: 'Setup completed successfully' });
+    });
   } catch (error) {
     console.error('Setup error:', error);
     res.status(500).json({ error: 'Failed to complete setup' });
@@ -124,7 +132,15 @@ app.post('/api/auth/login', async (req, res) => {
 
     req.session.authenticated = true;
     req.session.userId = user._id;
-    res.json({ message: 'Login successful' });
+
+    // Explicitly save session to MongoDB before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
+      res.json({ message: 'Login successful' });
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Failed to login' });
