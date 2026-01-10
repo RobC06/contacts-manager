@@ -2,6 +2,39 @@
 let contact = null;
 let contactId = null;
 
+// Toast notification function
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+
+  const icons = {
+    success: '✓',
+    error: '✕',
+    info: 'ℹ'
+  };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icons[type] || icons.info}</span>
+    <span class="toast-message">${message}</span>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto-dismiss after duration
+  const duration = type === 'error' ? 5000 : 3000;
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, duration);
+}
+
 // DOM elements
 const contactForm = document.getElementById('contactForm');
 const communicationModal = document.getElementById('communicationModal');
@@ -65,7 +98,10 @@ async function loadContact() {
     renderCommunications();
   } catch (error) {
     console.error('Failed to load contact:', error);
-    window.location.href = 'index.html';
+    showToast('Failed to load contact', 'error');
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 1000);
   }
 }
 
@@ -155,9 +191,13 @@ async function saveContact(event) {
     if (response.ok) {
       contact = await response.json();
       document.getElementById('contactNameTitle').textContent = contact.name;
+      showToast('Contact updated successfully', 'success');
+    } else {
+      showToast('Failed to update contact', 'error');
     }
   } catch (error) {
     console.error('Failed to update contact:', error);
+    showToast('Failed to update contact', 'error');
   }
 }
 
@@ -196,9 +236,14 @@ async function addCommunication(event) {
 
       // Set default date to today
       document.getElementById('commDate').value = new Date().toISOString().split('T')[0];
+
+      showToast('Communication added successfully', 'success');
+    } else {
+      showToast('Failed to add communication', 'error');
     }
   } catch (error) {
     console.error('Failed to add communication:', error);
+    showToast('Failed to add communication', 'error');
   }
 }
 
@@ -214,10 +259,16 @@ async function deleteContactHandler() {
     });
 
     if (response.ok) {
-      window.location.href = 'index.html';
+      showToast('Contact deleted successfully', 'success');
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 500);
+    } else {
+      showToast('Failed to delete contact', 'error');
     }
   } catch (error) {
     console.error('Failed to delete contact:', error);
+    showToast('Failed to delete contact', 'error');
   }
 }
 

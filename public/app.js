@@ -2,6 +2,39 @@
 let contacts = [];
 let currentSort = { field: null, direction: 'asc' };
 
+// Toast notification function
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+
+  const icons = {
+    success: '✓',
+    error: '✕',
+    info: 'ℹ'
+  };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icons[type] || icons.info}</span>
+    <span class="toast-message">${message}</span>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto-dismiss after duration
+  const duration = type === 'error' ? 5000 : 3000;
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, duration);
+}
+
 // DOM elements
 const contactsTableBody = document.getElementById('contactsTableBody');
 const searchInput = document.getElementById('searchInput');
@@ -54,6 +87,7 @@ async function loadContacts() {
     renderContacts();
   } catch (error) {
     console.error('Failed to load contacts:', error);
+    showToast('Failed to load contacts', 'error');
   }
 }
 
@@ -145,6 +179,11 @@ function filterContacts(searchTerm = '') {
     return matchesSearch && matchesTagFilter;
   });
 
+  // Show toast if search term provided but no results
+  if (term && filtered.length === 0 && contacts.length > 0) {
+    showToast('No contacts found', 'info');
+  }
+
   renderContacts(filtered);
 }
 
@@ -212,9 +251,13 @@ async function deleteContact(contactId, event) {
     if (response.ok) {
       contacts = contacts.filter(c => c.id !== contactId);
       renderContacts();
+      showToast('Contact deleted successfully', 'success');
+    } else {
+      showToast('Failed to delete contact', 'error');
     }
   } catch (error) {
     console.error('Failed to delete contact:', error);
+    showToast('Failed to delete contact', 'error');
   }
 }
 
@@ -258,9 +301,13 @@ async function saveContact(event) {
       renderContacts();
       contactModal.style.display = 'none';
       contactForm.reset();
+      showToast('Contact added successfully', 'success');
+    } else {
+      showToast('Failed to save contact', 'error');
     }
   } catch (error) {
     console.error('Failed to save contact:', error);
+    showToast('Failed to save contact', 'error');
   }
 }
 
@@ -335,9 +382,13 @@ async function saveSettings(event) {
       }
 
       settingsModal.style.display = 'none';
+      showToast('Settings saved successfully', 'success');
+    } else {
+      showToast('Failed to save settings', 'error');
     }
   } catch (error) {
     console.error('Failed to save settings:', error);
+    showToast('Failed to save settings', 'error');
   }
 }
 
@@ -475,8 +526,10 @@ async function deleteSelectedContacts() {
 
     // Re-render the table
     renderContacts();
+    showToast(`${selectedIds.length} contact${selectedIds.length > 1 ? 's' : ''} deleted successfully`, 'success');
   } catch (error) {
     console.error('Failed to delete contacts:', error);
+    showToast('Failed to delete some contacts', 'error');
   }
 }
 
