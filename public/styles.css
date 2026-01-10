@@ -171,24 +171,24 @@ thead {
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: #f8f9fa;
+  background-color: #dfe3e8;
 }
 
 th {
   text-align: left;
   padding: 16px;
   font-weight: 600;
-  color: #5f6368;
-  border-bottom: 2px solid #e1e8ed;
+  color: #2c3e50;
+  border-bottom: 2px solid #c1c7cd;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
   position: relative;
-  background-color: #f8f9fa;
+  background-color: #dfe3e8;
 }
 
 th:hover {
-  background-color: #e8eaed;
+  background-color: #d0d5db;
 }
 
 .sort-arrow {
