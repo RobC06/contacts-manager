@@ -42,7 +42,8 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Ensure cookie works with redirects
   }
 }));
 
@@ -97,16 +98,19 @@ app.post('/api/auth/setup', async (req, res) => {
     });
 
     await user.save();
+    console.log('[Setup] User created:', user._id);
 
     req.session.authenticated = true;
     req.session.userId = user._id;
+    console.log('[Setup] Session before save:', req.session);
 
     // Explicitly save session to MongoDB before responding
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
+        console.error('[Setup] Session save error:', err);
         return res.status(500).json({ error: 'Failed to save session' });
       }
+      console.log('[Setup] Session saved successfully. Session ID:', req.sessionID);
       res.json({ message: 'Setup completed successfully' });
     });
   } catch (error) {
@@ -534,6 +538,10 @@ cron.schedule('30 7 * * *', async () => {
 // Serve appropriate page based on auth status (MUST come before static middleware)
 app.get('/', async (req, res) => {
   const setupNeeded = await isSetupNeeded();
+  console.log('[Root Route] Setup needed:', setupNeeded);
+  console.log('[Root Route] Session:', req.session);
+  console.log('[Root Route] Authenticated:', req.session?.authenticated);
+
   if (setupNeeded) {
     res.sendFile(path.join(__dirname, 'public', 'setup.html'));
   } else if (!req.session || !req.session.authenticated) {
