@@ -447,7 +447,14 @@ app.get('/', (req, res) => {
 });
 
 // Serve static files (CSS, JS, images) - comes after root route to prevent bypassing auth
-app.use(express.static('public'));
+// Disable caching for development
+app.use(express.static('public', {
+  etag: false,
+  maxAge: 0,
+  setHeaders: (res, path) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  }
+}));
 
 // Start server
 app.listen(PORT, () => {
