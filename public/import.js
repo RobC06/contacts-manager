@@ -188,6 +188,17 @@ function parseCSV(content) {
       communications: []
     };
 
+    // If there's a Last Contact date, add it as a communication entry
+    if (headerMap.lastContact !== undefined && values[headerMap.lastContact]?.trim()) {
+      const lastContactDate = parseDate(values[headerMap.lastContact].trim());
+      if (lastContactDate) {
+        contact.communications.push({
+          date: lastContactDate,
+          description: 'Imported from Monday.com'
+        });
+      }
+    }
+
     parsedContacts.push(contact);
   }
 
@@ -248,6 +259,8 @@ function detectColumns(headers) {
   const tagVariations = ['tag', 'status', 'stage', 'state'];
   // Date variations
   const dateVariations = ['follow-up date', 'follow up date', 'followup date', 'next contact', 'date'];
+  // Last contact variations
+  const lastContactVariations = ['last contact', 'last contacted', 'date of last contact', 'most recent contact'];
   // Follow-up required variations
   const followUpRequiredVariations = ['follow-up?', 'follow up?', 'followup?', 'needs follow up', 'follow up required'];
   // Follow-up notes variations
@@ -273,6 +286,8 @@ function detectColumns(headers) {
       map.comments = index;
     } else if (map.tag === undefined && tagVariations.some(v => headerLower.includes(v))) {
       map.tag = index;
+    } else if (map.lastContact === undefined && lastContactVariations.some(v => headerLower.includes(v))) {
+      map.lastContact = index;
     } else if (map.followUpDate === undefined && dateVariations.some(v => headerLower.includes(v))) {
       map.followUpDate = index;
     } else if (map.followUpRequired === undefined && followUpRequiredVariations.some(v => headerLower.includes(v) || headerLower === v)) {
