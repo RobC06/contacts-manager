@@ -20,12 +20,14 @@
 
     <div class="search-filter">
       <input type="text" id="searchInput" placeholder="Search contacts...">
+      <button id="deleteSelectedBtn" class="btn btn-danger" style="display: none;">Delete Selected</button>
     </div>
 
     <div class="table-container">
       <table id="contactsTable">
         <thead>
           <tr>
+            <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox" title="Select All"></th>
             <th data-sort="name">Name <span class="sort-arrow">↕</span></th>
             <th data-sort="company">Company <span class="sort-arrow">↕</span></th>
             <th data-sort="title">Title <span class="sort-arrow">↕</span></th>

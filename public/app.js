@@ -78,6 +78,7 @@ function renderContacts(filteredContacts = null) {
 
     return `
       <tr data-id="${contact.id}">
+        <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
         <td><strong>${escapeHtml(contact.name)}</strong></td>
         <td>${escapeHtml(contact.company) || '-'}</td>
         <td>${escapeHtml(contact.title) || '-'}</td>
@@ -92,14 +93,19 @@ function renderContacts(filteredContacts = null) {
     `;
   }).join('');
 
-  // Add click listeners to rows (except action buttons)
+  // Add click listeners to rows (except action buttons and checkboxes)
   document.querySelectorAll('#contactsTableBody tr').forEach(row => {
     row.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('action-btn')) {
+      if (!e.target.classList.contains('action-btn') && !e.target.classList.contains('contact-checkbox')) {
         const contactId = row.dataset.id;
         viewContact(contactId);
       }
     });
+  });
+
+  // Add event listeners to checkboxes
+  document.querySelectorAll('.contact-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateDeleteButtonVisibility);
   });
 }
 
@@ -330,6 +336,12 @@ function setupEventListeners() {
   // Logout button
   document.getElementById('logoutBtn').addEventListener('click', logout);
 
+  // Select all checkbox
+  document.getElementById('selectAllCheckbox').addEventListener('change', handleSelectAll);
+
+  // Delete selected button
+  document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedContacts);
+
   // Contact form submit
   contactForm.addEventListener('submit', saveContact);
 
@@ -368,6 +380,78 @@ function setupEventListeners() {
       sortContacts(th.dataset.sort);
     });
   });
+}
+
+// Update delete button visibility based on selections
+function updateDeleteButtonVisibility() {
+  const selectedCheckboxes = document.querySelectorAll('.contact-checkbox:checked');
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+  if (selectedCheckboxes.length > 0) {
+    deleteBtn.style.display = 'inline-block';
+  } else {
+    deleteBtn.style.display = 'none';
+  }
+
+  // Update select all checkbox state
+  const allCheckboxes = document.querySelectorAll('.contact-checkbox');
+  if (allCheckboxes.length > 0 && selectedCheckboxes.length === allCheckboxes.length) {
+    selectAllCheckbox.checked = true;
+    selectAllCheckbox.indeterminate = false;
+  } else if (selectedCheckboxes.length > 0) {
+    selectAllCheckbox.checked = false;
+    selectAllCheckbox.indeterminate = true;
+  } else {
+    selectAllCheckbox.checked = false;
+    selectAllCheckbox.indeterminate = false;
+  }
+}
+
+// Handle select all checkbox
+function handleSelectAll(event) {
+  const isChecked = event.target.checked;
+  document.querySelectorAll('.contact-checkbox').forEach(checkbox => {
+    checkbox.checked = isChecked;
+  });
+  updateDeleteButtonVisibility();
+}
+
+// Delete selected contacts
+async function deleteSelectedContacts() {
+  const selectedCheckboxes = document.querySelectorAll('.contact-checkbox:checked');
+  const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.id);
+
+  if (selectedIds.length === 0) return;
+
+  const confirmMessage = `Are you sure you want to delete ${selectedIds.length} contact${selectedIds.length > 1 ? 's' : ''}?`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    // Delete all selected contacts
+    const deletePromises = selectedIds.map(id =>
+      fetch(`/api/contacts/${id}`, { method: 'DELETE' })
+    );
+
+    await Promise.all(deletePromises);
+
+    // Remove deleted contacts from the array
+    contacts = contacts.filter(c => !selectedIds.includes(c.id));
+
+    // Reset select all checkbox
+    document.getElementById('selectAllCheckbox').checked = false;
+    document.getElementById('selectAllCheckbox').indeterminate = false;
+
+    // Re-render the table
+    renderContacts();
+
+    alert(`Successfully deleted ${selectedIds.length} contact${selectedIds.length > 1 ? 's' : ''}!`);
+  } catch (error) {
+    console.error('Failed to delete contacts:', error);
+    alert('Failed to delete some contacts. Please try again.');
+  }
 }
 
 // Utility function to escape HTML
