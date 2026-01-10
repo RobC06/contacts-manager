@@ -91,18 +91,14 @@ function renderContacts(filteredContacts = null) {
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
         <td>${contact.followUpDate || '-'}</td>
         <td title="${escapeHtml(contact.followUpNotes || '')}">${truncatedNotes}</td>
-        <td>
-          <button class="action-btn view-btn" onclick="viewContact('${contact.id}')">View</button>
-          <button class="action-btn delete-btn" onclick="deleteContact('${contact.id}', event)">Delete</button>
-        </td>
       </tr>
     `;
   }).join('');
 
-  // Add click listeners to rows (except action buttons and checkboxes)
+  // Add click listeners to rows (except checkboxes)
   document.querySelectorAll('#contactsTableBody tr').forEach(row => {
     row.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('action-btn') && !e.target.classList.contains('contact-checkbox')) {
+      if (!e.target.classList.contains('contact-checkbox')) {
         const contactId = row.dataset.id;
         viewContact(contactId);
       }
