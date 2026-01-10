@@ -196,9 +196,11 @@ header h1 {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
-  overflow-y: visible;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
   transition: box-shadow 0.3s ease;
   width: 100%;
+  position: relative;
 }
 
 .table-container:hover {
