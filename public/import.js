@@ -231,8 +231,8 @@ function parseCSVLine(line) {
 function detectColumns(headers) {
   const map = {};
 
-  // Name variations
-  const nameVariations = ['name', 'contact name', 'full name', 'contact', 'person'];
+  // Name variations (removed 'contact' as it's too broad and matches 'Last Contact')
+  const nameVariations = ['name', 'contact name', 'full name', 'person'];
   // Company variations
   const companyVariations = ['company', 'company name', 'organization', 'org', 'business'];
   // Title variations
