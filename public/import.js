@@ -269,6 +269,11 @@ function detectColumns(headers) {
   headers.forEach((header, index) => {
     const headerLower = header.toLowerCase().trim();
 
+    // Debug logging for Last Contact detection
+    if (headerLower.includes('last') || headerLower.includes('contact')) {
+      console.log(`Checking header[${index}]: "${header}" -> "${headerLower}"`);
+    }
+
     // Special handling for name column - match "contact" but not "last contact"
     if (map.name === undefined) {
       if (headerLower === 'name' || headerLower === 'contact' || headerLower === 'contact name' || headerLower === 'full name' || headerLower === 'person') {
@@ -287,6 +292,7 @@ function detectColumns(headers) {
     } else if (map.tag === undefined && tagVariations.some(v => headerLower.includes(v))) {
       map.tag = index;
     } else if (map.lastContact === undefined && lastContactVariations.some(v => headerLower.includes(v))) {
+      console.log(`✓ Matched Last Contact at index ${index}: "${headerLower}"`);
       map.lastContact = index;
     } else if (map.followUpDate === undefined && dateVariations.some(v => headerLower.includes(v))) {
       map.followUpDate = index;
