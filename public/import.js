@@ -51,7 +51,6 @@ async function logout() {
     window.location.href = '/';
   } catch (error) {
     console.error('Logout failed:', error);
-    alert('Failed to logout');
   }
 }
 
@@ -109,7 +108,7 @@ function handleFile(file) {
   const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
   if (!validExtensions.includes(fileExtension)) {
-    alert('Invalid file format. Please upload a CSV or Excel file.');
+    console.error('Invalid file format. Please upload a CSV or Excel file.');
     return;
   }
 
@@ -137,7 +136,7 @@ function parseFile(file) {
       parseCSV(content);
     } else {
       // For Excel files, we'll convert to CSV first using a simple approach
-      alert('Excel file detected. Please convert to CSV first or ensure the file is tab/comma delimited.');
+      console.error('Excel file detected. Please convert to CSV first or ensure the file is tab/comma delimited.');
       // In a real implementation, you'd use a library like SheetJS (xlsx) to parse Excel
       // For now, we'll keep it simple and ask users to convert to CSV
       resetUpload();
@@ -151,7 +150,7 @@ function parseFile(file) {
 function parseCSV(content) {
   const lines = content.split('\n').filter(line => line.trim());
   if (lines.length < 2) {
-    alert('CSV file is empty or has no data rows.');
+    console.error('CSV file is empty or has no data rows.');
     resetUpload();
     return;
   }
@@ -164,7 +163,7 @@ function parseCSV(content) {
   console.log('Header map:', headerMap);
 
   if (headerMap.name === undefined) {
-    alert('Could not find a Name column. Please ensure your CSV has a Name or Contact Name column.');
+    console.error('Could not find a Name column. Please ensure your CSV has a Name or Contact Name column.');
     resetUpload();
     return;
   }
@@ -203,7 +202,7 @@ function parseCSV(content) {
   }
 
   if (parsedContacts.length === 0) {
-    alert('No valid contacts found in the CSV file.');
+    console.error('No valid contacts found in the CSV file.');
     resetUpload();
     return;
   }

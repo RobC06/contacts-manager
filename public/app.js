@@ -43,7 +43,6 @@ async function logout() {
     window.location.href = '/';
   } catch (error) {
     console.error('Logout failed:', error);
-    alert('Failed to logout');
   }
 }
 
@@ -55,7 +54,6 @@ async function loadContacts() {
     renderContacts();
   } catch (error) {
     console.error('Failed to load contacts:', error);
-    alert('Failed to load contacts. Please refresh the page.');
   }
 }
 
@@ -218,12 +216,9 @@ async function deleteContact(contactId, event) {
     if (response.ok) {
       contacts = contacts.filter(c => c.id !== contactId);
       renderContacts();
-    } else {
-      alert('Failed to delete contact');
     }
   } catch (error) {
     console.error('Failed to delete contact:', error);
-    alert('Failed to delete contact');
   }
 }
 
@@ -267,12 +262,9 @@ async function saveContact(event) {
       renderContacts();
       contactModal.style.display = 'none';
       contactForm.reset();
-    } else {
-      alert('Failed to save contact');
     }
   } catch (error) {
     console.error('Failed to save contact:', error);
-    alert('Failed to save contact');
   }
 }
 
@@ -346,14 +338,10 @@ async function saveSettings(event) {
         document.body.classList.remove('dark-mode');
       }
 
-      alert('Settings saved successfully!');
       settingsModal.style.display = 'none';
-    } else {
-      alert('Failed to save settings');
     }
   } catch (error) {
     console.error('Failed to save settings:', error);
-    alert('Failed to save settings');
   }
 }
 
@@ -491,11 +479,8 @@ async function deleteSelectedContacts() {
 
     // Re-render the table
     renderContacts();
-
-    alert(`Successfully deleted ${selectedIds.length} contact${selectedIds.length > 1 ? 's' : ''}!`);
   } catch (error) {
     console.error('Failed to delete contacts:', error);
-    alert('Failed to delete some contacts. Please try again.');
   }
 }
 

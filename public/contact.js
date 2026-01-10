@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   contactId = urlParams.get('id');
 
   if (!contactId) {
-    alert('No contact ID provided');
     window.location.href = 'index.html';
     return;
   }
@@ -50,7 +49,6 @@ async function logout() {
     window.location.href = '/';
   } catch (error) {
     console.error('Logout failed:', error);
-    alert('Failed to logout');
   }
 }
 
@@ -67,7 +65,6 @@ async function loadContact() {
     renderCommunications();
   } catch (error) {
     console.error('Failed to load contact:', error);
-    alert('Failed to load contact details');
     window.location.href = 'index.html';
   }
 }
@@ -158,13 +155,9 @@ async function saveContact(event) {
     if (response.ok) {
       contact = await response.json();
       document.getElementById('contactNameTitle').textContent = contact.name;
-      alert('Contact updated successfully!');
-    } else {
-      alert('Failed to update contact');
     }
   } catch (error) {
     console.error('Failed to update contact:', error);
-    alert('Failed to update contact');
   }
 }
 
@@ -203,12 +196,9 @@ async function addCommunication(event) {
 
       // Set default date to today
       document.getElementById('commDate').value = new Date().toISOString().split('T')[0];
-    } else {
-      alert('Failed to add communication');
     }
   } catch (error) {
     console.error('Failed to add communication:', error);
-    alert('Failed to add communication');
   }
 }
 
@@ -224,14 +214,10 @@ async function deleteContactHandler() {
     });
 
     if (response.ok) {
-      alert('Contact deleted successfully');
       window.location.href = 'index.html';
-    } else {
-      alert('Failed to delete contact');
     }
   } catch (error) {
     console.error('Failed to delete contact:', error);
-    alert('Failed to delete contact');
   }
 }
 
