@@ -427,6 +427,7 @@ app.get('/api/config', requireAuth, async (req, res) => {
 
     // Don't send password to frontend
     const safeConfig = {
+      darkMode: user.darkMode || false,
       emailEnabled: user.email ? true : false,
       notificationEmail: user.email || '',
       smtpConfig: {
@@ -455,6 +456,10 @@ app.put('/api/config', requireAuth, async (req, res) => {
     }
 
     // Update user settings
+    if (req.body.darkMode !== undefined) {
+      user.darkMode = req.body.darkMode;
+    }
+
     if (req.body.notificationEmail !== undefined) {
       user.email = req.body.notificationEmail;
     }

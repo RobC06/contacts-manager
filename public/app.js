@@ -17,6 +17,7 @@ const emptyState = document.getElementById('emptyState');
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
   loadContacts();
+  loadDarkMode();
   setupEventListeners();
 });
 
@@ -276,11 +277,26 @@ async function saveContact(event) {
 }
 
 // Load settings
+// Load and apply dark mode
+async function loadDarkMode() {
+  try {
+    const response = await fetch('/api/config');
+    const config = await response.json();
+
+    if (config.darkMode) {
+      document.body.classList.add('dark-mode');
+    }
+  } catch (error) {
+    console.error('Failed to load dark mode:', error);
+  }
+}
+
 async function loadSettings() {
   try {
     const response = await fetch('/api/config');
     const config = await response.json();
 
+    document.getElementById('darkModeToggle').checked = config.darkMode || false;
     document.getElementById('emailEnabled').checked = config.emailEnabled;
     document.getElementById('notificationEmail').value = config.notificationEmail;
     document.getElementById('smtpHost').value = config.smtpConfig.host;
@@ -296,7 +312,10 @@ async function loadSettings() {
 async function saveSettings(event) {
   event.preventDefault();
 
+  const darkMode = document.getElementById('darkModeToggle').checked;
+
   const configData = {
+    darkMode: darkMode,
     emailEnabled: document.getElementById('emailEnabled').checked,
     notificationEmail: document.getElementById('notificationEmail').value,
     smtpConfig: {
@@ -320,6 +339,13 @@ async function saveSettings(event) {
     });
 
     if (response.ok) {
+      // Apply dark mode immediately
+      if (darkMode) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+
       alert('Settings saved successfully!');
       settingsModal.style.display = 'none';
     } else {
