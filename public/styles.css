@@ -202,12 +202,17 @@ th.sorted-desc .sort-arrow::after {
 }
 
 tbody tr {
-  border-bottom: 1px solid #e1e8ed;
+  border-top: 1px solid #d1d8dd;
+  border-bottom: 1px solid #d1d8dd;
   transition: background-color 0.2s;
 }
 
+tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
 tbody tr:hover {
-  background-color: #f8f9fa;
+  background-color: #f0f3f5 !important;
   cursor: pointer;
 }
 
