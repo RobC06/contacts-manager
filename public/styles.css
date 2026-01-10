@@ -154,6 +154,7 @@ header h1 {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
+  overflow-y: visible;
   transition: box-shadow 0.3s ease;
   width: 100%;
 }
@@ -168,10 +169,12 @@ table {
 }
 
 thead {
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 10;
   background-color: #dfe3e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 th {
