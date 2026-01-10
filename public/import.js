@@ -158,9 +158,12 @@ function parseCSV(content) {
 
   // Parse headers
   const headers = parseCSVLine(lines[0]);
+  console.log('Headers found:', headers);
+  console.log('First header:', headers[0], 'Length:', headers[0].length, 'Trimmed:', headers[0].trim());
   const headerMap = detectColumns(headers);
+  console.log('Header map:', headerMap);
 
-  if (!headerMap.name) {
+  if (headerMap.name === undefined) {
     alert('Could not find a Name column. Please ensure your CSV has a Name or Contact Name column.');
     resetUpload();
     return;
@@ -254,27 +257,27 @@ function detectColumns(headers) {
     const headerLower = header.toLowerCase().trim();
 
     // Special handling for name column - match "contact" but not "last contact"
-    if (!map.name) {
+    if (map.name === undefined) {
       if (headerLower === 'name' || headerLower === 'contact' || headerLower === 'contact name' || headerLower === 'full name' || headerLower === 'person') {
         map.name = index;
       }
     }
 
-    if (!map.company && companyVariations.some(v => headerLower.includes(v))) {
+    if (map.company === undefined && companyVariations.some(v => headerLower.includes(v))) {
       map.company = index;
-    } else if (!map.title && titleVariations.some(v => headerLower.includes(v))) {
+    } else if (map.title === undefined && titleVariations.some(v => headerLower.includes(v))) {
       map.title = index;
-    } else if (!map.email && emailVariations.some(v => headerLower.includes(v))) {
+    } else if (map.email === undefined && emailVariations.some(v => headerLower.includes(v))) {
       map.email = index;
-    } else if (!map.comments && commentsVariations.some(v => headerLower.includes(v))) {
+    } else if (map.comments === undefined && commentsVariations.some(v => headerLower.includes(v))) {
       map.comments = index;
-    } else if (!map.tag && tagVariations.some(v => headerLower.includes(v))) {
+    } else if (map.tag === undefined && tagVariations.some(v => headerLower.includes(v))) {
       map.tag = index;
-    } else if (!map.followUpDate && dateVariations.some(v => headerLower.includes(v))) {
+    } else if (map.followUpDate === undefined && dateVariations.some(v => headerLower.includes(v))) {
       map.followUpDate = index;
-    } else if (!map.followUpRequired && followUpRequiredVariations.some(v => headerLower.includes(v) || headerLower === v)) {
+    } else if (map.followUpRequired === undefined && followUpRequiredVariations.some(v => headerLower.includes(v) || headerLower === v)) {
       map.followUpRequired = index;
-    } else if (!map.followUpNotes && followUpNotesVariations.some(v => headerLower.includes(v))) {
+    } else if (map.followUpNotes === undefined && followUpNotesVariations.some(v => headerLower.includes(v))) {
       map.followUpNotes = index;
     }
   });
