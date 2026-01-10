@@ -1,14 +1,32 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const mongoose = require('mongoose');
+
+// Import models
+const User = require('./models/User');
+const Contact = require('./models/Contact');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/contact-outreach-manager';
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
+});
 
 // Middleware
 app.use(bodyParser.json());
@@ -23,58 +41,6 @@ app.use(session({
   }
 }));
 
-// Data file path
-const DATA_DIR = path.join(__dirname, 'data');
-const CONTACTS_FILE = path.join(DATA_DIR, 'contacts.json');
-const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
-}
-
-// Initialize contacts file if it doesn't exist
-if (!fs.existsSync(CONTACTS_FILE)) {
-  fs.writeFileSync(CONTACTS_FILE, JSON.stringify([], null, 2));
-}
-
-// Initialize config file if it doesn't exist
-if (!fs.existsSync(CONFIG_FILE)) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify({
-    passwordHash: null,
-    emailEnabled: false,
-    notificationEmail: '',
-    smtpConfig: {
-      host: '',
-      port: 587,
-      secure: false,
-      auth: {
-        user: '',
-        pass: ''
-      }
-    }
-  }, null, 2));
-}
-
-// Helper functions
-function readContacts() {
-  const data = fs.readFileSync(CONTACTS_FILE, 'utf8');
-  return JSON.parse(data);
-}
-
-function writeContacts(contacts) {
-  fs.writeFileSync(CONTACTS_FILE, JSON.stringify(contacts, null, 2));
-}
-
-function readConfig() {
-  const data = fs.readFileSync(CONFIG_FILE, 'utf8');
-  return JSON.parse(data);
-}
-
-function writeConfig(config) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-}
-
 // Authentication middleware
 function requireAuth(req, res, next) {
   if (req.session && req.session.authenticated) {
@@ -84,39 +50,51 @@ function requireAuth(req, res, next) {
 }
 
 // Check if setup is needed
-function isSetupNeeded() {
-  const config = readConfig();
-  return !config.passwordHash;
+async function isSetupNeeded() {
+  try {
+    const userCount = await User.countDocuments();
+    return userCount === 0;
+  } catch (error) {
+    console.error('Error checking setup status:', error);
+    return true;
+  }
 }
 
 // Authentication Routes
 
 // Check auth status
-app.get('/api/auth/status', (req, res) => {
+app.get('/api/auth/status', async (req, res) => {
+  const setupNeeded = await isSetupNeeded();
   res.json({
     authenticated: req.session && req.session.authenticated,
-    setupNeeded: isSetupNeeded()
+    setupNeeded: setupNeeded
   });
 });
 
 // Setup password (first-time only)
 app.post('/api/auth/setup', async (req, res) => {
   try {
-    if (!isSetupNeeded()) {
+    const setupNeeded = await isSetupNeeded();
+    if (!setupNeeded) {
       return res.status(400).json({ error: 'Setup already completed' });
     }
 
-    const { password } = req.body;
+    const { password, username } = req.body;
     if (!password || password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const config = readConfig();
-    config.passwordHash = passwordHash;
-    writeConfig(config);
+
+    const user = new User({
+      username: username || 'admin',
+      password: passwordHash
+    });
+
+    await user.save();
 
     req.session.authenticated = true;
+    req.session.userId = user._id;
     res.json({ message: 'Setup completed successfully' });
   } catch (error) {
     console.error('Setup error:', error);
@@ -128,18 +106,19 @@ app.post('/api/auth/setup', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { password } = req.body;
-    const config = readConfig();
+    const user = await User.findOne();
 
-    if (!config.passwordHash) {
+    if (!user) {
       return res.status(400).json({ error: 'Setup required' });
     }
 
-    const isValid = await bcrypt.compare(password, config.passwordHash);
+    const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
     req.session.authenticated = true;
+    req.session.userId = user._id;
     res.json({ message: 'Login successful' });
   } catch (error) {
     console.error('Login error:', error);
@@ -161,9 +140,13 @@ app.post('/api/auth/logout', (req, res) => {
 app.post('/api/auth/change-password', requireAuth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const config = readConfig();
+    const user = await User.findById(req.session.userId);
 
-    const isValid = await bcrypt.compare(currentPassword, config.passwordHash);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
     if (!isValid) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
@@ -172,8 +155,8 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'New password must be at least 6 characters' });
     }
 
-    config.passwordHash = await bcrypt.hash(newPassword, 10);
-    writeConfig(config);
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
@@ -185,35 +168,64 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
 // API Routes (Protected)
 
 // Get all contacts
-app.get('/api/contacts', requireAuth, (req, res) => {
+app.get('/api/contacts', requireAuth, async (req, res) => {
   try {
-    const contacts = readContacts();
-    res.json(contacts);
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    // Transform MongoDB _id to id for frontend compatibility
+    const transformedContacts = contacts.map(contact => ({
+      id: contact._id.toString(),
+      name: contact.name,
+      company: contact.company,
+      title: contact.title,
+      email: contact.email,
+      comments: contact.comments,
+      tag: contact.tag,
+      followUpDate: contact.followUpDate,
+      followUpRequired: contact.followUpRequired,
+      followUpNotes: contact.followUpNotes,
+      communications: contact.communications,
+      createdAt: contact.createdAt
+    }));
+    res.json(transformedContacts);
   } catch (error) {
+    console.error('Error fetching contacts:', error);
     res.status(500).json({ error: 'Failed to read contacts' });
   }
 });
 
 // Get single contact
-app.get('/api/contacts/:id', requireAuth, (req, res) => {
+app.get('/api/contacts/:id', requireAuth, async (req, res) => {
   try {
-    const contacts = readContacts();
-    const contact = contacts.find(c => c.id === req.params.id);
+    const contact = await Contact.findById(req.params.id);
     if (!contact) {
       return res.status(404).json({ error: 'Contact not found' });
     }
-    res.json(contact);
+    // Transform for frontend
+    const transformedContact = {
+      id: contact._id.toString(),
+      name: contact.name,
+      company: contact.company,
+      title: contact.title,
+      email: contact.email,
+      comments: contact.comments,
+      tag: contact.tag,
+      followUpDate: contact.followUpDate,
+      followUpRequired: contact.followUpRequired,
+      followUpNotes: contact.followUpNotes,
+      communications: contact.communications,
+      createdAt: contact.createdAt
+    };
+    res.json(transformedContact);
   } catch (error) {
+    console.error('Error fetching contact:', error);
     res.status(500).json({ error: 'Failed to read contact' });
   }
 });
 
 // Create new contact
-app.post('/api/contacts', requireAuth, (req, res) => {
+app.post('/api/contacts', requireAuth, async (req, res) => {
   try {
-    const contacts = readContacts();
-    const newContact = {
-      id: Date.now().toString(),
+    const contact = new Contact({
       name: req.body.name || '',
       company: req.body.company || '',
       title: req.body.title || '',
@@ -223,81 +235,118 @@ app.post('/api/contacts', requireAuth, (req, res) => {
       followUpDate: req.body.followUpDate || null,
       followUpRequired: req.body.followUpRequired || false,
       followUpNotes: req.body.followUpNotes || '',
-      communications: req.body.communications || [],
-      createdAt: new Date().toISOString()
+      communications: req.body.communications || []
+    });
+
+    await contact.save();
+
+    // Transform for frontend
+    const transformedContact = {
+      id: contact._id.toString(),
+      name: contact.name,
+      company: contact.company,
+      title: contact.title,
+      email: contact.email,
+      comments: contact.comments,
+      tag: contact.tag,
+      followUpDate: contact.followUpDate,
+      followUpRequired: contact.followUpRequired,
+      followUpNotes: contact.followUpNotes,
+      communications: contact.communications,
+      createdAt: contact.createdAt
     };
-    contacts.push(newContact);
-    writeContacts(contacts);
-    res.status(201).json(newContact);
+
+    res.status(201).json(transformedContact);
   } catch (error) {
+    console.error('Error creating contact:', error);
     res.status(500).json({ error: 'Failed to create contact' });
   }
 });
 
 // Update contact
-app.put('/api/contacts/:id', requireAuth, (req, res) => {
+app.put('/api/contacts/:id', requireAuth, async (req, res) => {
   try {
-    const contacts = readContacts();
-    const index = contacts.findIndex(c => c.id === req.params.id);
-    if (index === -1) {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
       return res.status(404).json({ error: 'Contact not found' });
     }
 
-    contacts[index] = {
-      ...contacts[index],
-      ...req.body,
-      id: req.params.id // Ensure ID doesn't change
+    // Update fields
+    if (req.body.name !== undefined) contact.name = req.body.name;
+    if (req.body.company !== undefined) contact.company = req.body.company;
+    if (req.body.title !== undefined) contact.title = req.body.title;
+    if (req.body.email !== undefined) contact.email = req.body.email;
+    if (req.body.comments !== undefined) contact.comments = req.body.comments;
+    if (req.body.tag !== undefined) contact.tag = req.body.tag;
+    if (req.body.followUpDate !== undefined) contact.followUpDate = req.body.followUpDate;
+    if (req.body.followUpRequired !== undefined) contact.followUpRequired = req.body.followUpRequired;
+    if (req.body.followUpNotes !== undefined) contact.followUpNotes = req.body.followUpNotes;
+    if (req.body.communications !== undefined) contact.communications = req.body.communications;
+
+    await contact.save();
+
+    // Transform for frontend
+    const transformedContact = {
+      id: contact._id.toString(),
+      name: contact.name,
+      company: contact.company,
+      title: contact.title,
+      email: contact.email,
+      comments: contact.comments,
+      tag: contact.tag,
+      followUpDate: contact.followUpDate,
+      followUpRequired: contact.followUpRequired,
+      followUpNotes: contact.followUpNotes,
+      communications: contact.communications,
+      createdAt: contact.createdAt
     };
 
-    writeContacts(contacts);
-    res.json(contacts[index]);
+    res.json(transformedContact);
   } catch (error) {
+    console.error('Error updating contact:', error);
     res.status(500).json({ error: 'Failed to update contact' });
   }
 });
 
 // Delete contact
-app.delete('/api/contacts/:id', requireAuth, (req, res) => {
+app.delete('/api/contacts/:id', requireAuth, async (req, res) => {
   try {
-    const contacts = readContacts();
-    const filteredContacts = contacts.filter(c => c.id !== req.params.id);
-    if (contacts.length === filteredContacts.length) {
+    const result = await Contact.findByIdAndDelete(req.params.id);
+    if (!result) {
       return res.status(404).json({ error: 'Contact not found' });
     }
-    writeContacts(filteredContacts);
     res.json({ message: 'Contact deleted successfully' });
   } catch (error) {
+    console.error('Error deleting contact:', error);
     res.status(500).json({ error: 'Failed to delete contact' });
   }
 });
 
 // Add communication to contact
-app.post('/api/contacts/:id/communications', requireAuth, (req, res) => {
+app.post('/api/contacts/:id/communications', requireAuth, async (req, res) => {
   try {
-    const contacts = readContacts();
-    const contact = contacts.find(c => c.id === req.params.id);
+    const contact = await Contact.findById(req.params.id);
     if (!contact) {
       return res.status(404).json({ error: 'Contact not found' });
     }
 
     const newCommunication = {
-      id: Date.now().toString(),
       date: req.body.date || new Date().toISOString().split('T')[0],
-      type: req.body.type || 'email',
       description: req.body.description || ''
     };
 
-    contact.communications = contact.communications || [];
     contact.communications.unshift(newCommunication); // Add to beginning
-    writeContacts(contacts);
+    await contact.save();
+
     res.status(201).json(newCommunication);
   } catch (error) {
+    console.error('Error adding communication:', error);
     res.status(500).json({ error: 'Failed to add communication' });
   }
 });
 
 // Import contacts in bulk
-app.post('/api/contacts/import', requireAuth, (req, res) => {
+app.post('/api/contacts/import', requireAuth, async (req, res) => {
   try {
     const { contacts: newContacts } = req.body;
 
@@ -305,16 +354,15 @@ app.post('/api/contacts/import', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'No contacts provided' });
     }
 
-    const existingContacts = readContacts();
     let importedCount = 0;
+    const contactsToInsert = [];
 
     newContacts.forEach(contactData => {
       if (!contactData.name || !contactData.name.trim()) {
         return; // Skip contacts without names
       }
 
-      const newContact = {
-        id: Date.now().toString() + '-' + Math.random().toString(36).substring(7),
+      contactsToInsert.push({
         name: contactData.name || '',
         company: contactData.company || '',
         title: contactData.title || '',
@@ -324,15 +372,13 @@ app.post('/api/contacts/import', requireAuth, (req, res) => {
         followUpDate: contactData.followUpDate || null,
         followUpRequired: contactData.followUpRequired || false,
         followUpNotes: contactData.followUpNotes || '',
-        communications: contactData.communications || [],
-        createdAt: new Date().toISOString()
-      };
-
-      existingContacts.push(newContact);
+        communications: contactData.communications || []
+      });
       importedCount++;
     });
 
-    writeContacts(existingContacts);
+    await Contact.insertMany(contactsToInsert);
+
     res.status(201).json({
       message: 'Contacts imported successfully',
       count: importedCount
@@ -343,44 +389,64 @@ app.post('/api/contacts/import', requireAuth, (req, res) => {
   }
 });
 
-// Get config
-app.get('/api/config', requireAuth, (req, res) => {
+// Get config (user settings)
+app.get('/api/config', requireAuth, async (req, res) => {
   try {
-    const config = readConfig();
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     // Don't send password to frontend
     const safeConfig = {
-      ...config,
+      emailEnabled: user.email ? true : false,
+      notificationEmail: user.email || '',
       smtpConfig: {
-        ...config.smtpConfig,
+        host: user.smtpHost,
+        port: user.smtpPort,
+        secure: user.smtpPort === 465,
         auth: {
-          user: config.smtpConfig.auth.user,
-          pass: config.smtpConfig.auth.pass ? '********' : ''
+          user: user.smtpUser,
+          pass: user.smtpPassword ? '********' : ''
         }
       }
     };
     res.json(safeConfig);
   } catch (error) {
+    console.error('Error fetching config:', error);
     res.status(500).json({ error: 'Failed to read config' });
   }
 });
 
-// Update config
-app.put('/api/config', requireAuth, (req, res) => {
+// Update config (user settings)
+app.put('/api/config', requireAuth, async (req, res) => {
   try {
-    const currentConfig = readConfig();
-    const newConfig = {
-      ...currentConfig,
-      ...req.body
-    };
-
-    // If password is masked, keep the old one
-    if (req.body.smtpConfig && req.body.smtpConfig.auth && req.body.smtpConfig.auth.pass === '********') {
-      newConfig.smtpConfig.auth.pass = currentConfig.smtpConfig.auth.pass;
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    writeConfig(newConfig);
+    // Update user settings
+    if (req.body.notificationEmail !== undefined) {
+      user.email = req.body.notificationEmail;
+    }
+
+    if (req.body.smtpConfig) {
+      if (req.body.smtpConfig.host !== undefined) user.smtpHost = req.body.smtpConfig.host;
+      if (req.body.smtpConfig.port !== undefined) user.smtpPort = req.body.smtpConfig.port;
+      if (req.body.smtpConfig.auth) {
+        if (req.body.smtpConfig.auth.user !== undefined) user.smtpUser = req.body.smtpConfig.auth.user;
+        // Only update password if it's not masked
+        if (req.body.smtpConfig.auth.pass !== undefined && req.body.smtpConfig.auth.pass !== '********') {
+          user.smtpPassword = req.body.smtpConfig.auth.pass;
+        }
+      }
+    }
+
+    await user.save();
     res.json({ message: 'Config updated successfully' });
   } catch (error) {
+    console.error('Error updating config:', error);
     res.status(500).json({ error: 'Failed to update config' });
   }
 });
@@ -388,18 +454,25 @@ app.put('/api/config', requireAuth, (req, res) => {
 // Email notification function
 async function sendFollowUpNotification(contact) {
   try {
-    const config = readConfig();
-
-    if (!config.emailEnabled || !config.notificationEmail) {
-      console.log('Email notifications disabled or no email configured');
+    const user = await User.findOne();
+    if (!user || !user.email || !user.smtpHost) {
+      console.log('Email notifications disabled or not configured');
       return;
     }
 
-    const transporter = nodemailer.createTransport(config.smtpConfig);
+    const transporter = nodemailer.createTransport({
+      host: user.smtpHost,
+      port: user.smtpPort,
+      secure: user.smtpPort === 465,
+      auth: {
+        user: user.smtpUser,
+        pass: user.smtpPassword
+      }
+    });
 
     const mailOptions = {
-      from: config.smtpConfig.auth.user,
-      to: config.notificationEmail,
+      from: user.smtpFromEmail || user.smtpUser,
+      to: user.email,
       subject: `Follow-up Reminder: ${contact.name}`,
       html: `
         <h2>Follow-up Reminder</h2>
@@ -421,23 +494,26 @@ async function sendFollowUpNotification(contact) {
 }
 
 // Check for follow-ups daily at 7:30 AM Eastern Time
-cron.schedule('30 7 * * *', () => {
+cron.schedule('30 7 * * *', async () => {
   console.log('Checking for follow-ups...');
-  const contacts = readContacts();
   const today = new Date().toISOString().split('T')[0];
 
-  contacts.forEach(contact => {
-    if (contact.followUpDate === today) {
-      sendFollowUpNotification(contact);
+  try {
+    const contacts = await Contact.find({ followUpDate: today });
+    for (const contact of contacts) {
+      await sendFollowUpNotification(contact);
     }
-  });
+  } catch (error) {
+    console.error('Error checking follow-ups:', error);
+  }
 }, {
   timezone: 'America/New_York'
 });
 
 // Serve appropriate page based on auth status (MUST come before static middleware)
-app.get('/', (req, res) => {
-  if (isSetupNeeded()) {
+app.get('/', async (req, res) => {
+  const setupNeeded = await isSetupNeeded();
+  if (setupNeeded) {
     res.sendFile(path.join(__dirname, 'public', 'setup.html'));
   } else if (!req.session || !req.session.authenticated) {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
