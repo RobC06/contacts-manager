@@ -308,17 +308,28 @@ function detectColumns(headers) {
 
 // Normalize tag values
 function normalizeTag(tag) {
-  const tagLower = tag.toLowerCase();
-
-  if (tagLower.includes('follow') || tagLower.includes('action')) {
-    return 'follow up';
-  } else if (tagLower.includes('wait') || tagLower.includes('pending') || tagLower.includes('response')) {
-    return 'waiting for response';
-  } else if (tagLower.includes('done') || tagLower.includes('complete') || tagLower.includes('no action')) {
+  if (!tag || !tag.trim()) {
     return 'no action';
   }
 
-  // Default
+  const tagLower = tag.toLowerCase().trim();
+
+  // Check for "waiting for response"
+  if (tagLower.includes('waiting') || tagLower.includes('response')) {
+    return 'waiting for response';
+  }
+
+  // Check for "follow up" variations
+  if (tagLower.includes('follow-up') || tagLower.includes('follow up') || tagLower.includes('followup')) {
+    return 'follow up';
+  }
+
+  // Check for "no action" variations
+  if (tagLower === 'no' || tagLower === 'done' || tagLower.includes('complete') || tagLower.includes('no action')) {
+    return 'no action';
+  }
+
+  // Default - if we don't recognize it, assume no action
   return 'no action';
 }
 
