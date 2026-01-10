@@ -16,6 +16,9 @@ const Contact = require('./models/Contact');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Railway's proxy (required for secure cookies behind reverse proxy)
+app.set('trust proxy', 1);
+
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/contact-outreach-manager';
 
@@ -539,8 +542,10 @@ cron.schedule('30 7 * * *', async () => {
 app.get('/', async (req, res) => {
   const setupNeeded = await isSetupNeeded();
   console.log('[Root Route] Setup needed:', setupNeeded);
+  console.log('[Root Route] Session ID:', req.sessionID);
   console.log('[Root Route] Session:', req.session);
   console.log('[Root Route] Authenticated:', req.session?.authenticated);
+  console.log('[Root Route] Cookies:', req.headers.cookie);
 
   if (setupNeeded) {
     res.sendFile(path.join(__dirname, 'public', 'setup.html'));
