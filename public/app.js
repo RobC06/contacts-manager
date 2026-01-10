@@ -390,15 +390,8 @@ function setupEventListeners() {
     settingsModal.style.display = 'none';
   });
 
-  // Close modal when clicking outside
-  window.addEventListener('click', (event) => {
-    if (event.target === contactModal) {
-      contactModal.style.display = 'none';
-    }
-    if (event.target === settingsModal) {
-      settingsModal.style.display = 'none';
-    }
-  });
+  // Removed click-outside-to-close to prevent accidental data loss
+  // Users must click the X button or Cancel button to close modals
 
   // Sort table headers
   document.querySelectorAll('th[data-sort]').forEach(th => {
