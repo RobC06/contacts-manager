@@ -960,17 +960,17 @@ body.dark-mode table {
 }
 
 body.dark-mode thead {
-  background: #3a3f4a;
+  background: #454b58;
 }
 
 body.dark-mode th {
-  background: #3a3f4a;
+  background: #454b58;
   color: #e8eaed;
-  border-bottom: 2px solid #4a4f5a;
+  border-bottom: 2px solid #5a616e;
 }
 
 body.dark-mode th:hover {
-  background: #44495a;
+  background: #505765;
 }
 
 body.dark-mode tbody tr {
