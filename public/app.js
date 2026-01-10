@@ -76,6 +76,12 @@ function renderContacts(filteredContacts = null) {
     const lastContactDate = getLastContactDate(contact);
     const tagClass = contact.tag.replace(/\s+/g, '-');
 
+    const truncatedNotes = contact.followUpNotes
+      ? (contact.followUpNotes.length > 50
+          ? escapeHtml(contact.followUpNotes.substring(0, 50)) + '...'
+          : escapeHtml(contact.followUpNotes))
+      : '-';
+
     return `
       <tr data-id="${contact.id}">
         <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
@@ -85,6 +91,7 @@ function renderContacts(filteredContacts = null) {
         <td>${lastContactDate || '-'}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
         <td>${contact.followUpDate || '-'}</td>
+        <td title="${escapeHtml(contact.followUpNotes || '')}">${truncatedNotes}</td>
         <td>
           <button class="action-btn view-btn" onclick="viewContact('${contact.id}')">View</button>
           <button class="action-btn delete-btn" onclick="deleteContact('${contact.id}', event)">Delete</button>
