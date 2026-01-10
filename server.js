@@ -500,8 +500,8 @@ async function sendFollowUpNotification(contact) {
 
     const mailOptions = {
       from: user.smtpFromEmail || user.smtpUser,
-      to: user.email,
-      subject: `Follow-up Reminder: ${contact.name}`,
+      to: 'rcohen@hs-law.com',
+      subject: `REMINDER : FOLLOW-UP WITH ${contact.name}`,
       html: `
         <h2>Follow-up Reminder</h2>
         <p><strong>Contact:</strong> ${contact.name}</p>
