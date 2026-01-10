@@ -6,6 +6,7 @@ const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 
 // Import models
@@ -34,6 +35,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'contact-manager-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: MONGODB_URI,
+    touchAfter: 24 * 3600 // lazy session update
+  }),
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
