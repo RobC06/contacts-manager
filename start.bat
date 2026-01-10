@@ -22,6 +22,9 @@ echo Press Ctrl+C to stop the server
 echo ======================================
 echo.
 
+REM Open browser after a 2 second delay
+start "" cmd /c "timeout /t 2 /nobreak >nul && start http://localhost:3000"
+
 node server.js
 
 pause
