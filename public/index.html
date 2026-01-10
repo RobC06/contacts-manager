@@ -20,6 +20,14 @@
 
     <div class="search-filter">
       <input type="text" id="searchInput" placeholder="Search contacts...">
+      <div class="filter-group">
+        <label for="tagFilter">Filter by Follow-up?:</label>
+        <div class="filter-checkboxes" id="tagFilterContainer">
+          <label><input type="checkbox" class="tag-filter" value="follow up" checked> Follow Up</label>
+          <label><input type="checkbox" class="tag-filter" value="waiting for response" checked> Waiting for Response</label>
+          <label><input type="checkbox" class="tag-filter" value="no action" checked> No Action</label>
+        </div>
+      </div>
       <button id="deleteSelectedBtn" class="btn btn-danger" style="display: none;">Delete Selected</button>
     </div>
 

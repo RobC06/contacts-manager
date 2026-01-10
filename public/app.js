@@ -128,16 +128,28 @@ function getLastContactDate(contact) {
 }
 
 // Search and filter
-function filterContacts(searchTerm) {
+function filterContacts(searchTerm = '') {
   const term = searchTerm.toLowerCase();
+
+  // Get selected tag filters
+  const selectedTags = Array.from(document.querySelectorAll('.tag-filter:checked'))
+    .map(checkbox => checkbox.value);
+
   const filtered = contacts.filter(contact => {
-    return (
+    // Check search term match
+    const matchesSearch = !term || (
       contact.name.toLowerCase().includes(term) ||
       (contact.company && contact.company.toLowerCase().includes(term)) ||
       (contact.title && contact.title.toLowerCase().includes(term)) ||
       contact.tag.toLowerCase().includes(term)
     );
+
+    // Check tag filter match
+    const matchesTagFilter = selectedTags.length === 0 || selectedTags.includes(contact.tag);
+
+    return matchesSearch && matchesTagFilter;
   });
+
   renderContacts(filtered);
 }
 
@@ -324,6 +336,13 @@ function setupEventListeners() {
   // Search
   searchInput.addEventListener('input', (e) => {
     filterContacts(e.target.value);
+  });
+
+  // Tag filter checkboxes
+  document.querySelectorAll('.tag-filter').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      filterContacts(searchInput.value);
+    });
   });
 
   // Add contact button
