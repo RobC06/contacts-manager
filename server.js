@@ -527,6 +527,9 @@ async function sendFollowUpNotification(contact) {
       host: user.smtpHost,
       port: user.smtpPort,
       secure: user.smtpPort === 465,
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: {
         user: user.smtpUser,
         pass: user.smtpPassword
@@ -628,6 +631,9 @@ app.post('/api/test-email', requireAuth, async (req, res) => {
       host: user.smtpHost,
       port: user.smtpPort,
       secure: user.smtpPort === 465,
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: {
         user: user.smtpUser,
         pass: user.smtpPassword
