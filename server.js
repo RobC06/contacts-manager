@@ -487,9 +487,22 @@ app.put('/api/config', requireAuth, async (req, res) => {
 // Email notification function
 async function sendFollowUpNotification(contact) {
   try {
+    console.log(`[EMAIL] Attempting to send notification for contact: ${contact.name}`);
+
     const user = await User.findOne();
-    if (!user || !user.email || !user.smtpHost) {
-      console.log('Email notifications disabled or not configured');
+    if (!user) {
+      console.log('[EMAIL] No user found in database');
+      return;
+    }
+
+    console.log(`[EMAIL] User email: ${user.email}`);
+    console.log(`[EMAIL] SMTP Host: ${user.smtpHost}`);
+    console.log(`[EMAIL] SMTP Port: ${user.smtpPort}`);
+    console.log(`[EMAIL] SMTP User: ${user.smtpUser}`);
+    console.log(`[EMAIL] SMTP Password configured: ${user.smtpPassword ? 'Yes' : 'No'}`);
+
+    if (!user.email || !user.smtpHost) {
+      console.log('[EMAIL] Email notifications disabled or not configured - missing email or SMTP host');
       return;
     }
 
@@ -503,10 +516,19 @@ async function sendFollowUpNotification(contact) {
       }
     });
 
+    // Verify SMTP connection
+    try {
+      await transporter.verify();
+      console.log('[EMAIL] SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('[EMAIL] SMTP connection verification failed:', verifyError);
+      throw verifyError;
+    }
+
     const mailOptions = {
       from: user.smtpFromEmail || user.smtpUser,
-      to: 'rcohen@hs-law.com',
-      subject: `REMINDER : FOLLOW-UP WITH ${contact.name}`,
+      to: user.email,
+      subject: `REMINDER: FOLLOW-UP WITH ${contact.name}`,
       html: `
         <h2>Follow-up Reminder</h2>
         <p><strong>Contact:</strong> ${contact.name}</p>
@@ -519,28 +541,122 @@ async function sendFollowUpNotification(contact) {
       `
     };
 
+    console.log(`[EMAIL] Sending email to: ${mailOptions.to}`);
     await transporter.sendMail(mailOptions);
-    console.log(`Follow-up notification sent for ${contact.name}`);
+    console.log(`[EMAIL] ✓ Follow-up notification sent successfully for ${contact.name}`);
   } catch (error) {
-    console.error('Failed to send email notification:', error);
+    console.error('[EMAIL] ✗ Failed to send email notification:', error);
+    console.error('[EMAIL] Error details:', error.message);
   }
 }
 
 // Check for follow-ups daily at 7:30 AM Eastern Time
 cron.schedule('30 7 * * *', async () => {
-  console.log('Checking for follow-ups...');
+  const now = new Date();
   const today = new Date().toISOString().split('T')[0];
+
+  console.log('========================================');
+  console.log('[CRON] Follow-up check running...');
+  console.log(`[CRON] Current time: ${now.toISOString()}`);
+  console.log(`[CRON] Today's date (UTC): ${today}`);
+  console.log('========================================');
 
   try {
     const contacts = await Contact.find({ followUpDate: today });
+    console.log(`[CRON] Found ${contacts.length} contact(s) with follow-up date: ${today}`);
+
+    if (contacts.length > 0) {
+      console.log('[CRON] Contacts found:');
+      contacts.forEach((c, i) => {
+        console.log(`  ${i + 1}. ${c.name} (Follow-up: ${c.followUpDate})`);
+      });
+    }
+
     for (const contact of contacts) {
       await sendFollowUpNotification(contact);
     }
+
+    console.log('[CRON] Follow-up check completed');
   } catch (error) {
-    console.error('Error checking follow-ups:', error);
+    console.error('[CRON] Error checking follow-ups:', error);
   }
 }, {
   timezone: 'America/New_York'
+});
+
+console.log('[CRON] Email reminder cron job scheduled for 7:30 AM EST daily');
+
+// Test email endpoint - sends a test email to verify SMTP configuration
+app.post('/api/test-email', requireAuth, async (req, res) => {
+  try {
+    console.log('[TEST-EMAIL] Manual email test requested');
+
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log(`[TEST-EMAIL] User email: ${user.email}`);
+    console.log(`[TEST-EMAIL] SMTP Host: ${user.smtpHost}`);
+    console.log(`[TEST-EMAIL] SMTP Port: ${user.smtpPort}`);
+    console.log(`[TEST-EMAIL] SMTP User: ${user.smtpUser}`);
+
+    if (!user.email || !user.smtpHost || !user.smtpUser || !user.smtpPassword) {
+      return res.status(400).json({
+        error: 'Email configuration incomplete. Please configure all SMTP settings in the Settings menu.'
+      });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: user.smtpHost,
+      port: user.smtpPort,
+      secure: user.smtpPort === 465,
+      auth: {
+        user: user.smtpUser,
+        pass: user.smtpPassword
+      }
+    });
+
+    // Verify SMTP connection
+    console.log('[TEST-EMAIL] Verifying SMTP connection...');
+    await transporter.verify();
+    console.log('[TEST-EMAIL] SMTP connection verified');
+
+    // Send test email
+    const mailOptions = {
+      from: user.smtpFromEmail || user.smtpUser,
+      to: user.email,
+      subject: 'Test Email - Contact Outreach Manager',
+      html: `
+        <h2>Test Email Successful!</h2>
+        <p>This is a test email from your Contact Outreach Manager application.</p>
+        <p>If you're seeing this, your email configuration is working correctly.</p>
+        <br>
+        <p><strong>SMTP Configuration:</strong></p>
+        <ul>
+          <li>Host: ${user.smtpHost}</li>
+          <li>Port: ${user.smtpPort}</li>
+          <li>User: ${user.smtpUser}</li>
+        </ul>
+        <br>
+        <p>Your daily follow-up reminders will be sent to this email address at 7:30 AM EST.</p>
+      `
+    };
+
+    console.log('[TEST-EMAIL] Sending test email...');
+    await transporter.sendMail(mailOptions);
+    console.log('[TEST-EMAIL] ✓ Test email sent successfully');
+
+    res.json({
+      message: 'Test email sent successfully! Check your inbox.',
+      recipient: user.email
+    });
+  } catch (error) {
+    console.error('[TEST-EMAIL] ✗ Failed to send test email:', error);
+    res.status(500).json({
+      error: 'Failed to send test email: ' + error.message
+    });
+  }
 });
 
 // Serve appropriate page based on auth status (MUST come before static middleware)

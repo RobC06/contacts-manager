@@ -392,6 +392,40 @@ async function saveSettings(event) {
   }
 }
 
+// Send test email
+async function sendTestEmail() {
+  const button = document.getElementById('testEmailBtn');
+  const originalText = button.textContent;
+
+  try {
+    // Disable button and show loading state
+    button.disabled = true;
+    button.textContent = 'Sending...';
+
+    const response = await fetch('/api/test-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showToast('Test email sent! Check your inbox.', 'success');
+    } else {
+      showToast(data.error || 'Failed to send test email', 'error');
+    }
+  } catch (error) {
+    console.error('Failed to send test email:', error);
+    showToast('Failed to send test email', 'error');
+  } finally {
+    // Re-enable button
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
+
 // Setup event listeners
 function setupEventListeners() {
   // Search
@@ -450,6 +484,9 @@ function setupEventListeners() {
   document.getElementById('cancelSettingsBtn').addEventListener('click', () => {
     settingsModal.style.display = 'none';
   });
+
+  // Test email button
+  document.getElementById('testEmailBtn').addEventListener('click', sendTestEmail);
 
   // Removed click-outside-to-close to prevent accidental data loss
   // Users must click the X button or Cancel button to close modals
