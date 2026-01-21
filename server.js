@@ -450,10 +450,21 @@ app.get('/api/config', requireAuth, async (req, res) => {
 // Update config (user settings)
 app.put('/api/config', requireAuth, async (req, res) => {
   try {
+    console.log('[CONFIG] Received config update request');
+    console.log('[CONFIG] Email:', req.body.notificationEmail);
+    console.log('[CONFIG] SMTP Host:', req.body.smtpConfig?.host);
+    console.log('[CONFIG] SMTP Port:', req.body.smtpConfig?.port);
+    console.log('[CONFIG] SMTP User:', req.body.smtpConfig?.auth?.user);
+    console.log('[CONFIG] SMTP Pass provided:', req.body.smtpConfig?.auth?.pass ? 'Yes (length: ' + req.body.smtpConfig.auth.pass.length + ')' : 'No');
+    console.log('[CONFIG] SMTP Pass is masked:', req.body.smtpConfig?.auth?.pass === '********');
+
     const user = await User.findById(req.session.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    console.log('[CONFIG] Current user email in DB:', user.email);
+    console.log('[CONFIG] Current SMTP password in DB:', user.smtpPassword ? 'Yes (length: ' + user.smtpPassword.length + ')' : 'No');
 
     // Update user settings
     if (req.body.darkMode !== undefined) {
@@ -471,12 +482,18 @@ app.put('/api/config', requireAuth, async (req, res) => {
         if (req.body.smtpConfig.auth.user !== undefined) user.smtpUser = req.body.smtpConfig.auth.user;
         // Only update password if it's not masked
         if (req.body.smtpConfig.auth.pass !== undefined && req.body.smtpConfig.auth.pass !== '********') {
+          console.log('[CONFIG] Updating SMTP password');
           user.smtpPassword = req.body.smtpConfig.auth.pass;
+        } else {
+          console.log('[CONFIG] NOT updating SMTP password (masked or undefined)');
         }
       }
     }
 
     await user.save();
+    console.log('[CONFIG] User saved successfully');
+    console.log('[CONFIG] After save - email:', user.email);
+    console.log('[CONFIG] After save - smtpPassword exists:', !!user.smtpPassword);
     res.json({ message: 'Config updated successfully' });
   } catch (error) {
     console.error('Error updating config:', error);
