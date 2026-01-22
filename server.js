@@ -503,6 +503,24 @@ app.put('/api/config', requireAuth, async (req, res) => {
 
 // Send email via Brevo API
 async function sendEmailViaBrevoAPI(user, subject, htmlContent) {
+  const emailData = {
+    sender: {
+      name: user.smtpFromName || 'Contact Outreach Manager',
+      email: user.smtpUser // Brevo verified sender email
+    },
+    to: [{
+      email: user.email,
+      name: user.username || 'User'
+    }],
+    subject: subject,
+    htmlContent: htmlContent
+  };
+
+  console.log('[BREVO-API] Sending email via Brevo API');
+  console.log('[BREVO-API] From:', emailData.sender.email);
+  console.log('[BREVO-API] To:', emailData.to[0].email);
+  console.log('[BREVO-API] Subject:', subject);
+
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -510,26 +528,18 @@ async function sendEmailViaBrevoAPI(user, subject, htmlContent) {
       'api-key': user.smtpPassword, // API key stored in smtpPassword field
       'content-type': 'application/json'
     },
-    body: JSON.stringify({
-      sender: {
-        name: user.smtpFromName || 'Contact Outreach Manager',
-        email: user.smtpUser // Brevo verified sender email
-      },
-      to: [{
-        email: user.email,
-        name: user.username || 'User'
-      }],
-      subject: subject,
-      htmlContent: htmlContent
-    })
+    body: JSON.stringify(emailData)
   });
 
+  const responseData = await response.json();
+  console.log('[BREVO-API] Response status:', response.status);
+  console.log('[BREVO-API] Response data:', JSON.stringify(responseData));
+
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
+    throw new Error(`Brevo API error: ${response.status} - ${JSON.stringify(responseData)}`);
   }
 
-  return await response.json();
+  return responseData;
 }
 
 // Email notification function
