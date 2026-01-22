@@ -155,7 +155,7 @@
           <input type="text" id="smtpUser">
         </div>
         <div class="form-group">
-          <label for="smtpPass">SMTP Password</label>
+          <label for="smtpPass">SMTP Password / API Key</label>
           <input type="password" id="smtpPass">
         </div>
         <div class="form-group">
@@ -163,7 +163,14 @@
           <small>Click to send a test email and verify your configuration</small>
         </div>
         <div class="info-box">
-          <p><strong>Note:</strong> For Gmail, you'll need to use an App Password. Go to your Google Account settings > Security > 2-Step Verification > App passwords to generate one.</p>
+          <p><strong>✅ Recommended: Brevo (free, 300 emails/day)</strong></p>
+          <ul style="margin: 5px 0; padding-left: 20px; font-size: 0.9em;">
+            <li>Host: <code>smtp-relay.brevo.com</code></li>
+            <li>Port: <code>587</code></li>
+            <li>Username: Your Brevo sender email (from Brevo dashboard)</li>
+            <li>Password: Your Brevo API key (not SMTP password!)</li>
+          </ul>
+          <p style="margin-top: 10px; font-size: 0.85em;"><em>Railway blocks SMTP ports, but Brevo's API works over HTTPS.</em></p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>

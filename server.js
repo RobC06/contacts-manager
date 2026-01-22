@@ -501,6 +501,37 @@ app.put('/api/config', requireAuth, async (req, res) => {
   }
 });
 
+// Send email via Brevo API
+async function sendEmailViaBrevoAPI(user, subject, htmlContent) {
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': user.smtpPassword, // API key stored in smtpPassword field
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: {
+        name: user.smtpFromName || 'Contact Outreach Manager',
+        email: user.smtpUser // Brevo verified sender email
+      },
+      to: [{
+        email: user.email,
+        name: user.username || 'User'
+      }],
+      subject: subject,
+      htmlContent: htmlContent
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
+  }
+
+  return await response.json();
+}
+
 // Email notification function
 async function sendFollowUpNotification(contact) {
   try {
@@ -518,8 +549,42 @@ async function sendFollowUpNotification(contact) {
     console.log(`[EMAIL] SMTP User: ${user.smtpUser}`);
     console.log(`[EMAIL] SMTP Password configured: ${user.smtpPassword ? 'Yes' : 'No'}`);
 
-    if (!user.email || !user.smtpHost) {
-      console.log('[EMAIL] Email notifications disabled or not configured - missing email or SMTP host');
+    if (!user.email) {
+      console.log('[EMAIL] Email notifications disabled or not configured - missing email');
+      return;
+    }
+
+    // Check if using Brevo API (smtp-relay.brevo.com host)
+    const useBrevoAPI = user.smtpHost && user.smtpHost.includes('brevo.com');
+
+    if (useBrevoAPI) {
+      console.log('[EMAIL] Using Brevo API (HTTPS)');
+
+      if (!user.smtpUser || !user.smtpPassword) {
+        console.log('[EMAIL] Brevo API key or sender email not configured');
+        return;
+      }
+
+      const subject = `REMINDER: FOLLOW-UP WITH ${contact.name}`;
+      const htmlContent = `
+        <h2>Follow-up Reminder</h2>
+        <p><strong>Contact:</strong> ${contact.name}</p>
+        <p><strong>Company:</strong> ${contact.company || 'N/A'}</p>
+        <p><strong>Title:</strong> ${contact.title || 'N/A'}</p>
+        <p><strong>Follow-up Date:</strong> ${contact.followUpDate}</p>
+        <p><strong>Tag:</strong> ${contact.tag}</p>
+        <br>
+        <p>This is an automated reminder from your Contact Outreach Manager.</p>
+      `;
+
+      await sendEmailViaBrevoAPI(user, subject, htmlContent);
+      console.log(`[EMAIL] ✓ Follow-up notification sent successfully via Brevo API for ${contact.name}`);
+      return;
+    }
+
+    // Fall back to SMTP if not using Brevo
+    if (!user.smtpHost) {
+      console.log('[EMAIL] Email notifications disabled or not configured - missing SMTP host');
       return;
     }
 
@@ -637,6 +702,41 @@ app.post('/api/test-email', requireAuth, async (req, res) => {
         error: 'Email configuration incomplete. Please configure all SMTP settings in the Settings menu.'
       });
     }
+
+    // Check if using Brevo API
+    const useBrevoAPI = user.smtpHost && user.smtpHost.includes('brevo.com');
+
+    if (useBrevoAPI) {
+      console.log('[TEST-EMAIL] Using Brevo API (HTTPS)');
+
+      const subject = 'Test Email - Contact Outreach Manager';
+      const htmlContent = `
+        <h2>Test Email Successful!</h2>
+        <p>This is a test email from your Contact Outreach Manager application.</p>
+        <p>If you're seeing this, your email configuration is working correctly.</p>
+        <br>
+        <p><strong>Email Configuration:</strong></p>
+        <ul>
+          <li>Method: Brevo API (HTTPS)</li>
+          <li>Sender: ${user.smtpUser}</li>
+        </ul>
+        <br>
+        <p>Your daily follow-up reminders will be sent to this email address at 7:30 AM EST.</p>
+      `;
+
+      await sendEmailViaBrevoAPI(user, subject, htmlContent);
+      console.log('[TEST-EMAIL] ✓ Test email sent successfully via Brevo API');
+
+      res.json({
+        message: 'Test email sent successfully via Brevo API! Check your inbox.',
+        recipient: user.email,
+        method: 'Brevo API (HTTPS)'
+      });
+      return;
+    }
+
+    // Fall back to SMTP
+    console.log('[TEST-EMAIL] Using SMTP');
 
     const transportConfig = {
       host: user.smtpHost,
