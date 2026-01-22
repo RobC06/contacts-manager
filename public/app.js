@@ -337,7 +337,16 @@ async function loadSettings() {
     document.getElementById('smtpHost').value = config.smtpConfig.host;
     document.getElementById('smtpPort').value = config.smtpConfig.port;
     document.getElementById('smtpUser').value = config.smtpConfig.auth.user;
-    document.getElementById('smtpPass').value = config.smtpConfig.auth.pass;
+
+    // Don't populate password field - leave it empty
+    // If password exists in DB, show placeholder
+    const passField = document.getElementById('smtpPass');
+    passField.value = '';
+    if (config.smtpConfig.auth.pass && config.smtpConfig.auth.pass !== '') {
+      passField.placeholder = '(password saved - leave blank to keep current)';
+    } else {
+      passField.placeholder = 'Enter SMTP password';
+    }
   } catch (error) {
     console.error('Failed to load settings:', error);
   }
@@ -348,6 +357,7 @@ async function saveSettings(event) {
   event.preventDefault();
 
   const darkMode = document.getElementById('darkModeToggle').checked;
+  const smtpPassValue = document.getElementById('smtpPass').value;
 
   const configData = {
     darkMode: darkMode,
@@ -359,7 +369,8 @@ async function saveSettings(event) {
       secure: false,
       auth: {
         user: document.getElementById('smtpUser').value,
-        pass: document.getElementById('smtpPass').value
+        // Only include password if user entered something
+        pass: smtpPassValue || '********'
       }
     }
   };
