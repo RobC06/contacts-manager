@@ -523,18 +523,29 @@ async function sendFollowUpNotification(contact) {
       return;
     }
 
-    const transporter = nodemailer.createTransport({
+    const transportConfig = {
       host: user.smtpHost,
       port: user.smtpPort,
       secure: user.smtpPort === 465,
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
       auth: {
         user: user.smtpUser,
         pass: user.smtpPassword
       }
-    });
+    };
+
+    // Add TLS settings for port 587
+    if (user.smtpPort === 587) {
+      transportConfig.requireTLS = true;
+      transportConfig.tls = {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: false
+      };
+    }
+
+    const transporter = nodemailer.createTransport(transportConfig);
 
     // Verify SMTP connection
     try {
@@ -627,18 +638,36 @@ app.post('/api/test-email', requireAuth, async (req, res) => {
       });
     }
 
-    const transporter = nodemailer.createTransport({
+    const transportConfig = {
       host: user.smtpHost,
       port: user.smtpPort,
       secure: user.smtpPort === 465,
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
       auth: {
         user: user.smtpUser,
         pass: user.smtpPassword
       }
-    });
+    };
+
+    // Add TLS settings for port 587
+    if (user.smtpPort === 587) {
+      transportConfig.requireTLS = true;
+      transportConfig.tls = {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: false
+      };
+    }
+
+    console.log('[TEST-EMAIL] Transport config:', JSON.stringify({
+      host: transportConfig.host,
+      port: transportConfig.port,
+      secure: transportConfig.secure,
+      requireTLS: transportConfig.requireTLS
+    }));
+
+    const transporter = nodemailer.createTransport(transportConfig);
 
     // Verify SMTP connection
     console.log('[TEST-EMAIL] Verifying SMTP connection...');
