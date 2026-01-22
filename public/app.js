@@ -392,8 +392,15 @@ async function saveSettings(event) {
         document.body.classList.remove('dark-mode');
       }
 
-      settingsModal.style.display = 'none';
-      showToast('Settings saved successfully', 'success');
+      // Update password field placeholder if password was entered
+      const passField = document.getElementById('smtpPass');
+      if (smtpPassValue && smtpPassValue !== '') {
+        passField.value = '';
+        passField.placeholder = '✓ Password saved - leave blank to keep current';
+      }
+
+      // Don't close modal - let user test email immediately
+      showToast('Settings saved successfully - you can now test email', 'success');
     } else {
       showToast('Failed to save settings', 'error');
     }
