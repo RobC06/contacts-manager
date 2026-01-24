@@ -535,29 +535,58 @@ small {
 .communication-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.communication-meta {
+  display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 12px;
 }
 
 .communication-type {
   display: inline-block;
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: capitalize;
   background-color: #e8f0fe;
   color: #1967d2;
 }
 
+/* Different colors for different communication types */
+.communication-type.type-email {
+  background-color: #e8f0fe;
+  color: #1967d2;
+}
+
+.communication-type.type-phone {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.communication-type.type-meeting {
+  background-color: #fce8e6;
+  color: #c5221f;
+}
+
+.communication-type.type-other {
+  background-color: #f3e8fd;
+  color: #7627bb;
+}
+
 .communication-date {
   color: #5f6368;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .communication-description {
   color: #2c3e50;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 14px;
 }
 
 .empty-message {
@@ -1094,6 +1123,27 @@ body.dark-mode .communication-date {
 
 body.dark-mode .communication-description {
   color: #e8eaed;
+}
+
+/* Dark mode communication type colors */
+body.dark-mode .communication-type.type-email {
+  background-color: #1e3a5f;
+  color: #7bb4f0;
+}
+
+body.dark-mode .communication-type.type-phone {
+  background-color: #1e3a2a;
+  color: #81c995;
+}
+
+body.dark-mode .communication-type.type-meeting {
+  background-color: #4a2e2e;
+  color: #f28b82;
+}
+
+body.dark-mode .communication-type.type-other {
+  background-color: #3a2e4a;
+  color: #c58af9;
 }
 
 body.dark-mode .instructions-section,

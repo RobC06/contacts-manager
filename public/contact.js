@@ -152,8 +152,10 @@ function renderCommunications() {
   communicationsContainer.innerHTML = sortedComms.map(comm => `
     <div class="communication-item">
       <div class="communication-header">
-        <span class="communication-type">${escapeHtml(comm.type)}</span>
-        <span class="communication-date">${formatDate(comm.date)}</span>
+        <div class="communication-meta">
+          <span class="communication-type type-${escapeHtml(comm.type)}">${escapeHtml(comm.type)}</span>
+          <span class="communication-date">${formatDate(comm.date)}</span>
+        </div>
       </div>
       <div class="communication-description">
         ${escapeHtml(comm.description)}
