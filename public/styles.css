@@ -428,14 +428,14 @@ form {
 }
 
 .form-group.highlight-field {
-  background-color: #fff9e6;
+  background-color: #e3f2fd;
   padding: 16px;
   border-radius: 8px;
-  border-left: 4px solid #f9ab00;
+  border-left: 4px solid #1976d2;
 }
 
 .form-group.highlight-field label {
-  color: #b36200;
+  color: #0d47a1;
   font-weight: 700;
 }
 
