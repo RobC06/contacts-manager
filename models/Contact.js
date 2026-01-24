@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const communicationSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['email', 'phone', 'meeting', 'other'],
+    default: 'other'
+  },
   date: {
     type: String,
     required: true
