@@ -149,11 +149,15 @@ function renderCommunications() {
     new Date(b.date) - new Date(a.date)
   );
 
-  communicationsContainer.innerHTML = sortedComms.map(comm => `
+  communicationsContainer.innerHTML = sortedComms.map(comm => {
+    // Default to 'other' if type is missing (for old communications)
+    const type = comm.type || 'other';
+
+    return `
     <div class="communication-item">
       <div class="communication-header">
         <div class="communication-meta">
-          <span class="communication-type type-${escapeHtml(comm.type)}">${escapeHtml(comm.type)}</span>
+          <span class="communication-type type-${escapeHtml(type)}">${escapeHtml(type)}</span>
           <span class="communication-date">${formatDate(comm.date)}</span>
         </div>
       </div>
@@ -161,7 +165,8 @@ function renderCommunications() {
         ${escapeHtml(comm.description)}
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // Save contact changes
