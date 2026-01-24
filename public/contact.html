@@ -86,7 +86,17 @@
       <div class="detail-section">
         <div class="section-header">
           <h2>Communication History</h2>
-          <button id="addCommunicationBtn" class="btn btn-primary btn-sm">Add Communication</button>
+          <div class="section-actions">
+            <button id="addCommunicationBtn" class="btn btn-primary btn-sm">Add Communication</button>
+            <button id="deleteSelectedCommsBtn" class="btn btn-danger btn-sm" style="display: none;">Delete Selected</button>
+          </div>
+        </div>
+
+        <div id="communicationSelectionBar" style="display: none; margin-bottom: 12px;">
+          <label style="font-size: 14px;">
+            <input type="checkbox" id="selectAllCommsCheckbox">
+            Select All
+          </label>
         </div>
 
         <div id="communicationsContainer">

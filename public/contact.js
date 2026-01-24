@@ -149,16 +149,22 @@ function renderCommunications() {
     new Date(b.date) - new Date(a.date)
   );
 
-  communicationsContainer.innerHTML = sortedComms.map(comm => {
+  communicationsContainer.innerHTML = sortedComms.map((comm, index) => {
     // Default to 'other' if type is missing (for old communications)
     const type = comm.type || 'other';
+    const commId = comm._id || index;
 
     return `
-    <div class="communication-item">
+    <div class="communication-item" data-comm-id="${commId}">
       <div class="communication-header">
         <div class="communication-meta">
+          <input type="checkbox" class="comm-checkbox" data-comm-id="${commId}">
           <span class="communication-type type-${escapeHtml(type)}">${escapeHtml(type)}</span>
           <span class="communication-date">${formatDate(comm.date)}</span>
+        </div>
+        <div class="communication-actions">
+          <button class="btn-icon edit-comm-btn" data-comm-id="${commId}" title="Edit">✏️</button>
+          <button class="btn-icon delete-comm-btn" data-comm-id="${commId}" title="Delete">🗑️</button>
         </div>
       </div>
       <div class="communication-description">
@@ -167,6 +173,33 @@ function renderCommunications() {
     </div>
     `;
   }).join('');
+
+  // Show selection bar if there are communications
+  const selectionBar = document.getElementById('communicationSelectionBar');
+  if (sortedComms.length > 0) {
+    selectionBar.style.display = 'block';
+  } else {
+    selectionBar.style.display = 'none';
+  }
+
+  // Add event listeners for checkboxes and buttons
+  document.querySelectorAll('.comm-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateDeleteCommButtonVisibility);
+  });
+
+  document.querySelectorAll('.edit-comm-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      editCommunication(btn.dataset.commId);
+    });
+  });
+
+  document.querySelectorAll('.delete-comm-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteCommunication(btn.dataset.commId);
+    });
+  });
 }
 
 // Save contact changes
@@ -208,7 +241,7 @@ async function saveContact(event) {
   }
 }
 
-// Add communication
+// Add or update communication
 async function addCommunication(event) {
   event.preventDefault();
 
@@ -218,20 +251,55 @@ async function addCommunication(event) {
     description: document.getElementById('commDescription').value
   };
 
+  const editingCommId = communicationForm.dataset.editingCommId;
+
   try {
-    const response = await fetch(`/api/contacts/${contactId}/communications`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(communicationData)
-    });
+    let response;
+
+    if (editingCommId) {
+      // Update existing communication
+      response = await fetch(`/api/contacts/${contactId}/communications/${editingCommId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(communicationData)
+      });
+
+      if (response.ok) {
+        const updatedCommunication = await response.json();
+        // Update in local array
+        const index = contact.communications.findIndex((c, i) => (c._id || i) === editingCommId);
+        if (index > -1) {
+          contact.communications[index] = updatedCommunication;
+        }
+
+        showToast('Communication updated successfully', 'success');
+      } else {
+        showToast('Failed to update communication', 'error');
+      }
+    } else {
+      // Add new communication
+      response = await fetch(`/api/contacts/${contactId}/communications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(communicationData)
+      });
+
+      if (response.ok) {
+        const newCommunication = await response.json();
+        contact.communications = contact.communications || [];
+        contact.communications.unshift(newCommunication);
+
+        showToast('Communication added successfully', 'success');
+      } else {
+        showToast('Failed to add communication', 'error');
+      }
+    }
 
     if (response.ok) {
-      const newCommunication = await response.json();
-      contact.communications = contact.communications || [];
-      contact.communications.unshift(newCommunication);
-
       renderCommunications();
 
       // Update last contact date
@@ -240,17 +308,137 @@ async function addCommunication(event) {
 
       communicationModal.style.display = 'none';
       communicationForm.reset();
+      delete communicationForm.dataset.editingCommId;
+
+      // Reset modal title and button
+      document.querySelector('#communicationModal h2').textContent = 'Add Communication';
+      const submitBtn = communicationForm.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Add Communication';
 
       // Set default date to today
       document.getElementById('commDate').value = new Date().toISOString().split('T')[0];
-
-      showToast('Communication added successfully', 'success');
-    } else {
-      showToast('Failed to add communication', 'error');
     }
   } catch (error) {
-    console.error('Failed to add communication:', error);
-    showToast('Failed to add communication', 'error');
+    console.error('Failed to save communication:', error);
+    showToast('Failed to save communication', 'error');
+  }
+}
+
+// Edit communication
+function editCommunication(commId) {
+  const comm = contact.communications.find((c, i) => (c._id || i) === commId);
+  if (!comm) return;
+
+  // Populate modal with existing data
+  document.getElementById('commType').value = comm.type || 'other';
+  document.getElementById('commDate').value = comm.date;
+  document.getElementById('commDescription').value = comm.description;
+
+  // Change modal title and button
+  document.querySelector('#communicationModal h2').textContent = 'Edit Communication';
+  const submitBtn = communicationForm.querySelector('button[type="submit"]');
+  submitBtn.textContent = 'Update Communication';
+
+  // Store commId for update
+  communicationForm.dataset.editingCommId = commId;
+
+  // Show modal
+  communicationModal.style.display = 'block';
+}
+
+// Delete single communication
+async function deleteCommunication(commId) {
+  if (!confirm('Are you sure you want to delete this communication?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/contacts/${contactId}/communications/${commId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      // Remove from local array
+      const index = contact.communications.findIndex((c, i) => (c._id || i) === commId);
+      if (index > -1) {
+        contact.communications.splice(index, 1);
+      }
+
+      renderCommunications();
+
+      // Update last contact date
+      const lastContactDate = getLastContactDate();
+      document.getElementById('lastContactDate').value = lastContactDate || 'No communications yet';
+
+      showToast('Communication deleted successfully', 'success');
+    } else {
+      showToast('Failed to delete communication', 'error');
+    }
+  } catch (error) {
+    console.error('Failed to delete communication:', error);
+    showToast('Failed to delete communication', 'error');
+  }
+}
+
+// Update delete button visibility
+function updateDeleteCommButtonVisibility() {
+  const selectedCheckboxes = document.querySelectorAll('.comm-checkbox:checked');
+  const deleteBtn = document.getElementById('deleteSelectedCommsBtn');
+
+  if (selectedCheckboxes.length > 0) {
+    deleteBtn.style.display = 'inline-block';
+  } else {
+    deleteBtn.style.display = 'none';
+  }
+}
+
+// Handle select all communications
+function handleSelectAllComms(e) {
+  const isChecked = e.target.checked;
+  document.querySelectorAll('.comm-checkbox').forEach(checkbox => {
+    checkbox.checked = isChecked;
+  });
+  updateDeleteCommButtonVisibility();
+}
+
+// Delete selected communications
+async function deleteSelectedCommunications() {
+  const selectedCheckboxes = document.querySelectorAll('.comm-checkbox:checked');
+  const commIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.commId);
+
+  if (commIds.length === 0) return;
+
+  if (!confirm(`Are you sure you want to delete ${commIds.length} communication(s)?`)) {
+    return;
+  }
+
+  try {
+    // Delete each communication
+    for (const commId of commIds) {
+      await fetch(`/api/contacts/${contactId}/communications/${commId}`, {
+        method: 'DELETE'
+      });
+
+      // Remove from local array
+      const index = contact.communications.findIndex((c, i) => (c._id || i) === commId);
+      if (index > -1) {
+        contact.communications.splice(index, 1);
+      }
+    }
+
+    renderCommunications();
+
+    // Update last contact date
+    const lastContactDate = getLastContactDate();
+    document.getElementById('lastContactDate').value = lastContactDate || 'No communications yet';
+
+    // Uncheck select all
+    document.getElementById('selectAllCommsCheckbox').checked = false;
+
+    showToast(`${commIds.length} communication(s) deleted successfully`, 'success');
+  } catch (error) {
+    console.error('Failed to delete communications:', error);
+    showToast('Failed to delete some communications', 'error');
   }
 }
 
@@ -287,6 +475,11 @@ function setupEventListeners() {
   // Add communication button
   addCommunicationBtn.addEventListener('click', () => {
     communicationForm.reset();
+    delete communicationForm.dataset.editingCommId;
+    // Reset modal title and button
+    document.querySelector('#communicationModal h2').textContent = 'Add Communication';
+    const submitBtn = communicationForm.querySelector('button[type="submit"]');
+    submitBtn.textContent = 'Add Communication';
     // Set default date to today
     document.getElementById('commDate').value = new Date().toISOString().split('T')[0];
     communicationModal.style.display = 'block';
@@ -294,6 +487,12 @@ function setupEventListeners() {
 
   // Communication form submit
   communicationForm.addEventListener('submit', addCommunication);
+
+  // Select all communications checkbox
+  document.getElementById('selectAllCommsCheckbox').addEventListener('change', handleSelectAllComms);
+
+  // Delete selected communications button
+  document.getElementById('deleteSelectedCommsBtn').addEventListener('click', deleteSelectedCommunications);
 
   // Delete contact button
   deleteContactBtn.addEventListener('click', deleteContactHandler);

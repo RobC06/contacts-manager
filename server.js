@@ -375,6 +375,59 @@ app.post('/api/contacts/:id/communications', requireAuth, async (req, res) => {
   }
 });
 
+// Update communication
+app.put('/api/contacts/:id/communications/:commId', requireAuth, async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    const commIndex = contact.communications.findIndex(c => c._id.toString() === req.params.commId);
+    if (commIndex === -1) {
+      return res.status(404).json({ error: 'Communication not found' });
+    }
+
+    // Update communication
+    contact.communications[commIndex] = {
+      ...contact.communications[commIndex].toObject(),
+      type: req.body.type || contact.communications[commIndex].type,
+      date: req.body.date || contact.communications[commIndex].date,
+      description: req.body.description || contact.communications[commIndex].description
+    };
+
+    await contact.save();
+
+    res.json(contact.communications[commIndex]);
+  } catch (error) {
+    console.error('Error updating communication:', error);
+    res.status(500).json({ error: 'Failed to update communication' });
+  }
+});
+
+// Delete communication
+app.delete('/api/contacts/:id/communications/:commId', requireAuth, async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    const commIndex = contact.communications.findIndex(c => c._id.toString() === req.params.commId);
+    if (commIndex === -1) {
+      return res.status(404).json({ error: 'Communication not found' });
+    }
+
+    contact.communications.splice(commIndex, 1);
+    await contact.save();
+
+    res.json({ message: 'Communication deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting communication:', error);
+    res.status(500).json({ error: 'Failed to delete communication' });
+  }
+});
+
 // Import contacts in bulk
 app.post('/api/contacts/import', requireAuth, async (req, res) => {
   try {
