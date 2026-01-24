@@ -427,6 +427,18 @@ form {
   margin-bottom: 20px;
 }
 
+.form-group.highlight-field {
+  background-color: #fff9e6;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #f9ab00;
+}
+
+.form-group.highlight-field label {
+  color: #b36200;
+  font-weight: 700;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1077,6 +1089,15 @@ body.dark-mode .close:hover {
 
 body.dark-mode label {
   color: #e8eaed;
+}
+
+body.dark-mode .form-group.highlight-field {
+  background-color: #3a3020;
+  border-left: 4px solid #f9ab00;
+}
+
+body.dark-mode .form-group.highlight-field label {
+  color: #ffc757;
 }
 
 body.dark-mode input[type="text"],
