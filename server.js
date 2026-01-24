@@ -360,6 +360,7 @@ app.post('/api/contacts/:id/communications', requireAuth, async (req, res) => {
     }
 
     const newCommunication = {
+      type: req.body.type || 'other',
       date: req.body.date || new Date().toISOString().split('T')[0],
       description: req.body.description || ''
     };
