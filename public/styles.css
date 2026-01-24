@@ -547,34 +547,33 @@ small {
 
 .communication-type {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: capitalize;
-  background-color: #e8f0fe;
-  color: #1967d2;
+  padding: 6px 16px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Different colors for different communication types */
 .communication-type.type-email {
-  background-color: #e8f0fe;
-  color: #1967d2;
+  background-color: #1a73e8;
+  color: #ffffff;
 }
 
 .communication-type.type-phone {
-  background-color: #e6f4ea;
-  color: #137333;
+  background-color: #0f9d58;
+  color: #ffffff;
 }
 
 .communication-type.type-meeting {
-  background-color: #fce8e6;
-  color: #c5221f;
+  background-color: #ea4335;
+  color: #ffffff;
 }
 
 .communication-type.type-other {
-  background-color: #f3e8fd;
-  color: #7627bb;
+  background-color: #9334e6;
+  color: #ffffff;
 }
 
 .communication-date {
@@ -1127,23 +1126,23 @@ body.dark-mode .communication-description {
 
 /* Dark mode communication type colors */
 body.dark-mode .communication-type.type-email {
-  background-color: #1e3a5f;
-  color: #7bb4f0;
+  background-color: #4285f4;
+  color: #ffffff;
 }
 
 body.dark-mode .communication-type.type-phone {
-  background-color: #1e3a2a;
-  color: #81c995;
+  background-color: #34a853;
+  color: #ffffff;
 }
 
 body.dark-mode .communication-type.type-meeting {
-  background-color: #4a2e2e;
-  color: #f28b82;
+  background-color: #ea4335;
+  color: #ffffff;
 }
 
 body.dark-mode .communication-type.type-other {
-  background-color: #3a2e4a;
-  color: #c58af9;
+  background-color: #a142f4;
+  color: #ffffff;
 }
 
 body.dark-mode .instructions-section,
