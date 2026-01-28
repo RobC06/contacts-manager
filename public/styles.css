@@ -452,10 +452,21 @@ form {
   max-width: 45%;
 }
 
+.form-group.notes-field-width-expanded {
+  flex: 1;
+  max-width: 56%;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.form-row.three-column-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
 }
 
 label {
