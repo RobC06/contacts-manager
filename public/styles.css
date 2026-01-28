@@ -443,6 +443,15 @@ form {
   max-width: 33.33%;
 }
 
+.form-group.date-field-width {
+  max-width: 200px;
+}
+
+.form-group.notes-field-width {
+  flex: 1;
+  max-width: 45%;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
