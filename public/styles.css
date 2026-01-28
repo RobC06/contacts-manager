@@ -474,6 +474,17 @@ form {
   align-items: flex-start;
 }
 
+.form-row.date-comments-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.form-row.date-comments-row .comments-field-width {
+  flex: 1;
+  max-width: none;
+}
+
 label {
   display: block;
   margin-bottom: 6px;
