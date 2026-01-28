@@ -485,6 +485,16 @@ form {
   max-width: none;
 }
 
+.form-group.last-contact-red label {
+  color: #d32f2f !important;
+  font-weight: 700;
+}
+
+.form-group.last-contact-red input {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
 label {
   display: block;
   margin-bottom: 6px;
@@ -1138,6 +1148,14 @@ body.dark-mode .form-group.highlight-field {
 
 body.dark-mode .form-group.highlight-field label {
   color: #ffc757;
+}
+
+body.dark-mode .form-group.last-contact-red label {
+  color: #ef5350 !important;
+}
+
+body.dark-mode .form-group.last-contact-red input {
+  color: #ef5350;
 }
 
 body.dark-mode input[type="text"],
