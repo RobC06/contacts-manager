@@ -520,6 +520,14 @@ function setupEventListeners() {
       communicationModal.style.display = 'none';
     }
   });
+
+  // Auto-populate email send date from follow-up date
+  document.getElementById('contactFollowUpDate').addEventListener('change', (e) => {
+    const followUpDate = e.target.value;
+    if (followUpDate) {
+      document.getElementById('emailSendDate').value = followUpDate;
+    }
+  });
 }
 
 // Utility functions
