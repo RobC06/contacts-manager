@@ -440,7 +440,7 @@ form {
 }
 
 .form-group.narrow-width {
-  max-width: 40%;
+  max-width: 280px;
 }
 
 .form-group.date-field-width {
