@@ -439,6 +439,10 @@ form {
   font-weight: 700;
 }
 
+.form-group.narrow-width {
+  max-width: 33.33%;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
