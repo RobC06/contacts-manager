@@ -65,9 +65,20 @@
             <label for="contactFollowUpNotes">Follow-up Notes</label>
             <textarea id="contactFollowUpNotes" rows="3" placeholder="Notes for the follow-up..."></textarea>
           </div>
+          <div class="form-group highlight-field">
+            <label>
+              <input type="checkbox" id="sendFollowUpEmail">
+              Send Follow-up Email
+            </label>
+            <small style="display: block; margin-top: 4px; color: #666;">Email will be sent to the address in your settings at 8:30 AM Eastern time</small>
+          </div>
+          <div class="form-group highlight-field">
+            <label for="emailSendDate">Email Send Date</label>
+            <input type="date" id="emailSendDate">
+          </div>
           <div class="form-group">
             <label for="contactComments">Comments</label>
-            <textarea id="contactComments" rows="4" placeholder="General comments about this contact..."></textarea>
+            <textarea id="contactComments" rows="1" placeholder="General comments about this contact..."></textarea>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save Changes</button>

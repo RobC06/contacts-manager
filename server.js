@@ -747,6 +747,81 @@ cron.schedule('30 7 * * *', async () => {
 
 console.log('[CRON] Email reminder cron job scheduled for 7:30 AM EST daily');
 
+// Send scheduled follow-up emails at 8:30 AM Eastern Time
+cron.schedule('30 8 * * *', async () => {
+  const now = new Date();
+  const today = new Date().toISOString().split('T')[0];
+
+  console.log('========================================');
+  console.log('[CRON-EMAIL] Scheduled follow-up email check running...');
+  console.log(`[CRON-EMAIL] Current time: ${now.toISOString()}`);
+  console.log(`[CRON-EMAIL] Today's date (UTC): ${today}`);
+  console.log('========================================');
+
+  try {
+    const contacts = await Contact.find({
+      sendFollowUpEmail: true,
+      emailSendDate: today
+    });
+    console.log(`[CRON-EMAIL] Found ${contacts.length} contact(s) scheduled for follow-up email today`);
+
+    if (contacts.length > 0) {
+      console.log('[CRON-EMAIL] Contacts found:');
+      contacts.forEach((c, i) => {
+        console.log(`  ${i + 1}. ${c.name} (Email send date: ${c.emailSendDate})`);
+      });
+    }
+
+    for (const contact of contacts) {
+      try {
+        const user = await User.findOne();
+        if (!user) {
+          console.log('[CRON-EMAIL] No user found, skipping email send');
+          continue;
+        }
+
+        // Check if Brevo is configured
+        if (!user.smtpUser || !user.smtpPassword) {
+          console.log('[CRON-EMAIL] Email not configured - missing SMTP credentials');
+          continue;
+        }
+
+        const subject = `Follow-up Email: ${contact.name}`;
+        const htmlContent = `
+          <h2>Follow-up Email for ${contact.name}</h2>
+          <p><strong>Company:</strong> ${contact.company || 'N/A'}</p>
+          <p><strong>Title:</strong> ${contact.title || 'N/A'}</p>
+          <p><strong>Email:</strong> ${contact.email || 'N/A'}</p>
+          <p><strong>Tag:</strong> ${contact.tag}</p>
+          ${contact.followUpNotes ? `<p><strong>Follow-up Notes:</strong></p><p>${contact.followUpNotes}</p>` : ''}
+          <br>
+          <p>This is your scheduled follow-up email from Contact Outreach Manager.</p>
+        `;
+
+        await sendEmailViaBrevoAPI(user, subject, htmlContent);
+        console.log(`[CRON-EMAIL] ✓ Scheduled follow-up email sent for ${contact.name}`);
+
+        // Clear the email scheduling fields after sending
+        contact.sendFollowUpEmail = false;
+        contact.emailSendDate = null;
+        await contact.save();
+        console.log(`[CRON-EMAIL] ✓ Email scheduling fields cleared for ${contact.name}`);
+
+      } catch (emailError) {
+        console.error(`[CRON-EMAIL] Failed to send email for ${contact.name}:`, emailError.message);
+      }
+    }
+
+    console.log('[CRON-EMAIL] Scheduled follow-up email check completed');
+  } catch (error) {
+    console.error('[CRON-EMAIL] Error checking scheduled follow-up emails:', error);
+  }
+}, {
+  timezone: 'America/New_York'
+});
+
+console.log('[CRON] Scheduled follow-up email job scheduled for 8:30 AM EST daily');
+
 // Test email endpoint - sends a test email to verify SMTP configuration
 app.post('/api/test-email', requireAuth, async (req, res) => {
   try {

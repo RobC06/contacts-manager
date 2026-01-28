@@ -116,6 +116,8 @@ function populateContactForm() {
   document.getElementById('contactTag').value = contact.tag;
   document.getElementById('contactFollowUpDate').value = contact.followUpDate || '';
   document.getElementById('contactFollowUpNotes').value = contact.followUpNotes || '';
+  document.getElementById('sendFollowUpEmail').checked = contact.sendFollowUpEmail || false;
+  document.getElementById('emailSendDate').value = contact.emailSendDate || '';
 
   // Set last contact date
   const lastContactDate = getLastContactDate();
@@ -214,7 +216,9 @@ async function saveContact(event) {
     comments: document.getElementById('contactComments').value,
     tag: document.getElementById('contactTag').value,
     followUpDate: document.getElementById('contactFollowUpDate').value || null,
-    followUpNotes: document.getElementById('contactFollowUpNotes').value
+    followUpNotes: document.getElementById('contactFollowUpNotes').value,
+    sendFollowUpEmail: document.getElementById('sendFollowUpEmail').checked,
+    emailSendDate: document.getElementById('emailSendDate').value || null
   };
 
   try {
