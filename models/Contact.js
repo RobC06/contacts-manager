@@ -59,13 +59,9 @@ const contactSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  sendFollowUpEmail: {
+  dontSendEmail: {
     type: Boolean,
     default: false
-  },
-  emailSendDate: {
-    type: String,
-    default: null
   },
   communications: [communicationSchema],
   createdAt: {

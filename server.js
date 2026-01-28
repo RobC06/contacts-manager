@@ -760,15 +760,15 @@ cron.schedule('30 8 * * *', async () => {
 
   try {
     const contacts = await Contact.find({
-      sendFollowUpEmail: true,
-      emailSendDate: today
+      followUpDate: today,
+      dontSendEmail: { $ne: true }
     });
-    console.log(`[CRON-EMAIL] Found ${contacts.length} contact(s) scheduled for follow-up email today`);
+    console.log(`[CRON-EMAIL] Found ${contacts.length} contact(s) with follow-up date today (email not disabled)`);
 
     if (contacts.length > 0) {
       console.log('[CRON-EMAIL] Contacts found:');
       contacts.forEach((c, i) => {
-        console.log(`  ${i + 1}. ${c.name} (Email send date: ${c.emailSendDate})`);
+        console.log(`  ${i + 1}. ${c.name} (Follow-up date: ${c.followUpDate})`);
       });
     }
 
@@ -786,26 +786,20 @@ cron.schedule('30 8 * * *', async () => {
           continue;
         }
 
-        const subject = `Follow-up Email: ${contact.name}`;
+        const subject = `Follow-up Reminder: ${contact.name}`;
         const htmlContent = `
-          <h2>Follow-up Email for ${contact.name}</h2>
+          <h2>Follow-up Reminder for ${contact.name}</h2>
           <p><strong>Company:</strong> ${contact.company || 'N/A'}</p>
           <p><strong>Title:</strong> ${contact.title || 'N/A'}</p>
           <p><strong>Email:</strong> ${contact.email || 'N/A'}</p>
           <p><strong>Tag:</strong> ${contact.tag}</p>
           ${contact.followUpNotes ? `<p><strong>Follow-up Notes:</strong></p><p>${contact.followUpNotes}</p>` : ''}
           <br>
-          <p>This is your scheduled follow-up email from Contact Outreach Manager.</p>
+          <p>This is your scheduled follow-up reminder from Contact Outreach Manager.</p>
         `;
 
         await sendEmailViaBrevoAPI(user, subject, htmlContent);
-        console.log(`[CRON-EMAIL] ✓ Scheduled follow-up email sent for ${contact.name}`);
-
-        // Clear the email scheduling fields after sending
-        contact.sendFollowUpEmail = false;
-        contact.emailSendDate = null;
-        await contact.save();
-        console.log(`[CRON-EMAIL] ✓ Email scheduling fields cleared for ${contact.name}`);
+        console.log(`[CRON-EMAIL] ✓ Follow-up reminder email sent for ${contact.name}`);
 
       } catch (emailError) {
         console.error(`[CRON-EMAIL] Failed to send email for ${contact.name}:`, emailError.message);

@@ -116,8 +116,7 @@ function populateContactForm() {
   document.getElementById('contactTag').value = contact.tag;
   document.getElementById('contactFollowUpDate').value = contact.followUpDate || '';
   document.getElementById('contactFollowUpNotes').value = contact.followUpNotes || '';
-  document.getElementById('sendFollowUpEmail').checked = contact.sendFollowUpEmail || false;
-  document.getElementById('emailSendDate').value = contact.emailSendDate || '';
+  document.getElementById('dontSendEmail').checked = contact.dontSendEmail || false;
 
   // Set last contact date
   const lastContactDate = getLastContactDate();
@@ -217,8 +216,7 @@ async function saveContact(event) {
     tag: document.getElementById('contactTag').value,
     followUpDate: document.getElementById('contactFollowUpDate').value || null,
     followUpNotes: document.getElementById('contactFollowUpNotes').value,
-    sendFollowUpEmail: document.getElementById('sendFollowUpEmail').checked,
-    emailSendDate: document.getElementById('emailSendDate').value || null
+    dontSendEmail: document.getElementById('dontSendEmail').checked
   };
 
   try {
@@ -518,14 +516,6 @@ function setupEventListeners() {
   window.addEventListener('click', (event) => {
     if (event.target === communicationModal) {
       communicationModal.style.display = 'none';
-    }
-  });
-
-  // Auto-populate email send date from follow-up date
-  document.getElementById('contactFollowUpDate').addEventListener('change', (e) => {
-    const followUpDate = e.target.value;
-    if (followUpDate) {
-      document.getElementById('emailSendDate').value = followUpDate;
     }
   });
 }
