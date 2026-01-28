@@ -457,6 +457,11 @@ form {
   max-width: 56%;
 }
 
+.form-group.comments-field-width {
+  flex: 1;
+  max-width: 50%;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

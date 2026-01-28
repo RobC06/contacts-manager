@@ -43,7 +43,7 @@
               <input type="email" id="contactEmail">
             </div>
           </div>
-          <div class="form-row">
+          <div class="form-row three-column-row">
             <div class="form-group highlight-field narrow-width">
               <label for="contactTag">Tag</label>
               <select id="contactTag">
@@ -52,9 +52,13 @@
                 <option value="waiting for response">Waiting for Response</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group date-field-width">
               <label>Date of Last Contact</label>
               <input type="text" id="lastContactDate" readonly>
+            </div>
+            <div class="form-group comments-field-width">
+              <label for="contactComments">Comments</label>
+              <textarea id="contactComments" rows="1" placeholder="General comments about this contact..."></textarea>
             </div>
           </div>
           <div class="form-row three-column-row">
@@ -74,10 +78,6 @@
               <label for="emailSendDate" style="margin-top: 12px; display: block;">Email Send Date</label>
               <input type="date" id="emailSendDate">
             </div>
-          </div>
-          <div class="form-group">
-            <label for="contactComments">Comments</label>
-            <textarea id="contactComments" rows="1" placeholder="General comments about this contact..."></textarea>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save Changes</button>
