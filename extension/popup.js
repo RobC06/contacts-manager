@@ -167,12 +167,17 @@ function resetForm() {
 }
 
 // Group entries by date, then by client within each date
+// Normalizes client names so "Acme", "acme", "ACME " all group together
 function groupByDateAndClient(entriesToGroup) {
   const grouped = {};
   entriesToGroup.forEach(entry => {
-    if (!grouped[entry.date]) grouped[entry.date] = {};
-    if (!grouped[entry.date][entry.client]) grouped[entry.date][entry.client] = [];
-    grouped[entry.date][entry.client].push(entry);
+    const dateKey = entry.date;
+    const clientKey = entry.client.trim().toLowerCase();
+    if (!grouped[dateKey]) grouped[dateKey] = {};
+    if (!grouped[dateKey][clientKey]) {
+      grouped[dateKey][clientKey] = { displayName: entry.client.trim(), entries: [] };
+    }
+    grouped[dateKey][clientKey].entries.push(entry);
   });
   return grouped;
 }
@@ -180,7 +185,12 @@ function groupByDateAndClient(entriesToGroup) {
 // Update client autocomplete list
 function updateClientList() {
   const clientList = document.getElementById('client-list');
-  const uniqueClients = [...new Set(entries.map(e => e.client))].sort();
+  const seen = {};
+  entries.forEach(e => {
+    const key = e.client.trim().toLowerCase();
+    if (!seen[key]) seen[key] = e.client.trim();
+  });
+  const uniqueClients = Object.values(seen).sort();
   clientList.innerHTML = uniqueClients.map(c => `<option value="${escapeHtml(c)}">`).join('');
 }
 
@@ -226,13 +236,13 @@ function render() {
     }
 
     const clients = grouped[date];
-    Object.keys(clients).forEach(client => {
-      const clientEntries = clients[client];
+    Object.keys(clients).forEach(clientKey => {
+      const { displayName, entries: clientEntries } = clients[clientKey];
       const clientTotal = clientEntries.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
 
       html += `<div class="client-group">`;
       html += `<div class="client-group-header">`;
-      html += `<span class="client-group-name">${escapeHtml(client)}</span>`;
+      html += `<span class="client-group-name">${escapeHtml(displayName)}</span>`;
       html += `<span class="client-group-hours">${clientTotal.toFixed(2)}h</span>`;
       html += `</div>`;
 
