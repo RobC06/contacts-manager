@@ -1,0 +1,245 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  width: 380px;
+  min-height: 500px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, sans-serif;
+  background-color: #f5f5f5;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header */
+#header {
+  padding: 15px;
+  background-color: #495057;
+  color: white;
+  position: relative;
+}
+
+#close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+#header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  padding-right: 30px;
+}
+
+#header-stats {
+  font-size: 13px;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+
+/* Form Section */
+#form-section {
+  padding: 15px;
+  border-bottom: 1px solid #d0d0d0;
+  background-color: #e8e8e8;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.form-row input {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+#submit-btn {
+  flex: 1;
+  padding: 8px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#cancel-btn {
+  padding: 8px 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* View Toggle */
+#view-toggle {
+  padding: 10px 15px;
+  border-bottom: 1px solid #d0d0d0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+}
+
+#entries-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+#expand-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#toggle-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  background-color: #e9ecef;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #495057;
+}
+
+/* Entries List */
+#entries-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 15px;
+  background-color: #f5f5f5;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.entry-card {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.entry-date {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.entry-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #007bff;
+}
+
+.entry-client {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #212529;
+}
+
+.entry-task {
+  font-size: 13px;
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-btn {
+  flex: 1;
+  padding: 5px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.delete-btn {
+  flex: 1;
+  padding: 5px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
