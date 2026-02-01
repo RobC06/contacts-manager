@@ -17,6 +17,22 @@ const entriesList = document.getElementById('entries-list');
 const entriesLabel = document.getElementById('entries-label');
 const headerStats = document.getElementById('header-stats');
 
+// Status elements
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+
+function setStatus(type, message) {
+  statusDot.className = '';
+  if (type === 'connected') {
+    statusDot.classList.add('connected');
+  } else if (type === 'error') {
+    statusDot.classList.add('error');
+  } else if (type === 'saving') {
+    statusDot.classList.add('saving');
+  }
+  statusText.textContent = message;
+}
+
 // Utility: escape HTML to prevent XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -30,14 +46,19 @@ async function fetchEntries() {
     const response = await fetch(`${API_BASE_URL}/api/time-entries`);
     if (response.ok) {
       entries = await response.json();
+      setStatus('connected', `Connected — ${entries.length} entries`);
+    } else {
+      setStatus('error', 'Server error — data may not be saved');
     }
   } catch (error) {
     console.error('Failed to fetch entries:', error);
+    setStatus('error', 'Cannot reach server — check config.js URL');
   }
   render();
 }
 
 async function createEntry(entry) {
+  setStatus('saving', 'Saving...');
   try {
     const response = await fetch(`${API_BASE_URL}/api/time-entries`, {
       method: 'POST',
@@ -47,14 +68,19 @@ async function createEntry(entry) {
     if (response.ok) {
       const newEntry = await response.json();
       entries.unshift(newEntry);
+      setStatus('connected', 'Saved');
+    } else {
+      setStatus('error', 'Failed to save — server error');
     }
   } catch (error) {
     console.error('Failed to create entry:', error);
+    setStatus('error', 'Failed to save — cannot reach server');
   }
   render();
 }
 
 async function updateEntry(id, data) {
+  setStatus('saving', 'Saving...');
   try {
     const response = await fetch(`${API_BASE_URL}/api/time-entries/${id}`, {
       method: 'PUT',
@@ -64,23 +90,32 @@ async function updateEntry(id, data) {
     if (response.ok) {
       const updated = await response.json();
       entries = entries.map(e => e.id === id ? updated : e);
+      setStatus('connected', 'Updated');
+    } else {
+      setStatus('error', 'Failed to update — server error');
     }
   } catch (error) {
     console.error('Failed to update entry:', error);
+    setStatus('error', 'Failed to update — cannot reach server');
   }
   render();
 }
 
 async function deleteEntry(id) {
+  setStatus('saving', 'Deleting...');
   try {
     const response = await fetch(`${API_BASE_URL}/api/time-entries/${id}`, {
       method: 'DELETE'
     });
     if (response.ok) {
       entries = entries.filter(e => e.id !== id);
+      setStatus('connected', 'Deleted');
+    } else {
+      setStatus('error', 'Failed to delete — server error');
     }
   } catch (error) {
     console.error('Failed to delete entry:', error);
+    setStatus('error', 'Failed to delete — cannot reach server');
   }
   render();
 }

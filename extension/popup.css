@@ -243,3 +243,35 @@ body {
   cursor: pointer;
   font-size: 11px;
 }
+
+/* Status Bar */
+#status-bar {
+  padding: 6px 15px;
+  border-top: 1px solid #d0d0d0;
+  background-color: #e8e8e8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #6c757d;
+}
+
+#status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  flex-shrink: 0;
+}
+
+#status-dot.connected {
+  background-color: #28a745;
+}
+
+#status-dot.error {
+  background-color: #dc3545;
+}
+
+#status-dot.saving {
+  background-color: #ffc107;
+}
