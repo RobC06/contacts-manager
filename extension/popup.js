@@ -182,17 +182,49 @@ function groupByDateAndClient(entriesToGroup) {
   return grouped;
 }
 
-// Update client autocomplete list
-function updateClientList() {
-  const clientList = document.getElementById('client-list');
+// Client autocomplete
+const clientSuggestions = document.getElementById('client-suggestions');
+
+function getUniqueClients() {
   const seen = {};
   entries.forEach(e => {
     const key = e.client.trim().toLowerCase();
     if (!seen[key]) seen[key] = e.client.trim();
   });
-  const uniqueClients = Object.values(seen).sort();
-  clientList.innerHTML = uniqueClients.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  return Object.values(seen).sort();
 }
+
+function showSuggestions() {
+  const typed = clientInput.value.trim().toLowerCase();
+  if (!typed) {
+    clientSuggestions.style.display = 'none';
+    return;
+  }
+  const matches = getUniqueClients().filter(c => c.toLowerCase().includes(typed));
+  if (matches.length === 0 || (matches.length === 1 && matches[0].toLowerCase() === typed)) {
+    clientSuggestions.style.display = 'none';
+    return;
+  }
+  clientSuggestions.innerHTML = matches.map(c =>
+    `<div class="suggestion-item">${escapeHtml(c)}</div>`
+  ).join('');
+  clientSuggestions.style.display = 'block';
+}
+
+function hideSuggestions() {
+  setTimeout(() => { clientSuggestions.style.display = 'none'; }, 150);
+}
+
+clientInput.addEventListener('input', showSuggestions);
+clientInput.addEventListener('focus', showSuggestions);
+clientInput.addEventListener('blur', hideSuggestions);
+clientSuggestions.addEventListener('click', (e) => {
+  if (e.target.classList.contains('suggestion-item')) {
+    clientInput.value = e.target.textContent;
+    clientSuggestions.style.display = 'none';
+    timeInput.focus();
+  }
+});
 
 // Render function
 function render() {
@@ -215,9 +247,6 @@ function render() {
 
   // Update toggle button
   toggleBtn.textContent = showAllEntries ? 'Show Today' : 'View All';
-
-  // Update client autocomplete
-  updateClientList();
 
   // Render entries
   if (displayEntries.length === 0) {
