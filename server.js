@@ -13,6 +13,7 @@ const mongoose = require('mongoose');
 // Import models
 const User = require('./models/User');
 const Contact = require('./models/Contact');
+const TimeEntry = require('./models/TimeEntry');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +51,17 @@ app.use(session({
     sameSite: 'lax' // Ensure cookie works with redirects
   }
 }));
+
+// CORS middleware for browser extension (time-entries API)
+app.use('/api/time-entries', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Authentication middleware
 function requireAuth(req, res, next) {
@@ -469,6 +481,89 @@ app.post('/api/contacts/import', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Import error:', error);
     res.status(500).json({ error: 'Failed to import contacts' });
+  }
+});
+
+// Time Entry API Routes (for browser extension)
+
+// Get all time entries
+app.get('/api/time-entries', async (req, res) => {
+  try {
+    const timeEntries = await TimeEntry.find().sort({ date: -1, createdAt: -1 });
+    const transformed = timeEntries.map(e => ({
+      id: e.entryId,
+      date: e.date,
+      client: e.client,
+      time: e.time,
+      task: e.task
+    }));
+    res.json(transformed);
+  } catch (error) {
+    console.error('Error fetching time entries:', error);
+    res.status(500).json({ error: 'Failed to fetch time entries' });
+  }
+});
+
+// Create time entry
+app.post('/api/time-entries', async (req, res) => {
+  try {
+    const entry = new TimeEntry({
+      entryId: req.body.id || Date.now(),
+      date: req.body.date,
+      client: req.body.client,
+      time: req.body.time,
+      task: req.body.task
+    });
+    await entry.save();
+    res.status(201).json({
+      id: entry.entryId,
+      date: entry.date,
+      client: entry.client,
+      time: entry.time,
+      task: entry.task
+    });
+  } catch (error) {
+    console.error('Error creating time entry:', error);
+    res.status(500).json({ error: 'Failed to create time entry' });
+  }
+});
+
+// Update time entry
+app.put('/api/time-entries/:id', async (req, res) => {
+  try {
+    const entry = await TimeEntry.findOne({ entryId: parseInt(req.params.id) });
+    if (!entry) {
+      return res.status(404).json({ error: 'Time entry not found' });
+    }
+    if (req.body.date !== undefined) entry.date = req.body.date;
+    if (req.body.client !== undefined) entry.client = req.body.client;
+    if (req.body.time !== undefined) entry.time = req.body.time;
+    if (req.body.task !== undefined) entry.task = req.body.task;
+    await entry.save();
+    res.json({
+      id: entry.entryId,
+      date: entry.date,
+      client: entry.client,
+      time: entry.time,
+      task: entry.task
+    });
+  } catch (error) {
+    console.error('Error updating time entry:', error);
+    res.status(500).json({ error: 'Failed to update time entry' });
+  }
+});
+
+// Delete time entry
+app.delete('/api/time-entries/:id', async (req, res) => {
+  try {
+    const result = await TimeEntry.findOneAndDelete({ entryId: parseInt(req.params.id) });
+    if (!result) {
+      return res.status(404).json({ error: 'Time entry not found' });
+    }
+    res.json({ message: 'Time entry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting time entry:', error);
+    res.status(500).json({ error: 'Failed to delete time entry' });
   }
 });
 
