@@ -178,70 +178,105 @@ body {
   font-size: 13px;
 }
 
-.entry-card {
+/* Date Heading (All Entries view) */
+.date-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  padding: 8px 0 4px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.date-heading:not(:first-child) {
+  margin-top: 6px;
+}
+
+/* Client Group */
+.client-group {
   margin-bottom: 10px;
-  padding: 10px;
   background-color: #fff;
   border-radius: 6px;
   border: 1px solid #d0d0d0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-.entry-header {
+.client-group-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.entry-date {
-  font-size: 12px;
-  color: #6c757d;
+.client-group-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #212529;
 }
 
-.entry-time {
+.client-group-hours {
   font-size: 13px;
   font-weight: 600;
   color: #007bff;
 }
 
-.entry-client {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #212529;
+/* Task Item */
+.task-item {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.entry-task {
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-text {
   font-size: 13px;
   color: #495057;
-  margin-bottom: 8px;
+  flex: 1;
+  margin-right: 8px;
 }
 
-.entry-actions {
+.task-right {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.task-hours {
+  font-size: 12px;
+  color: #6c757d;
+  margin-right: 4px;
 }
 
 .edit-btn {
-  flex: 1;
-  padding: 5px;
+  padding: 2px 8px;
   background-color: #28a745;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .delete-btn {
-  flex: 1;
-  padding: 5px;
+  padding: 2px 8px;
   background-color: #dc3545;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 /* Status Bar */

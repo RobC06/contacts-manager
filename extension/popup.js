@@ -166,6 +166,24 @@ function resetForm() {
   cancelBtn.style.display = 'none';
 }
 
+// Group entries by date, then by client within each date
+function groupByDateAndClient(entriesToGroup) {
+  const grouped = {};
+  entriesToGroup.forEach(entry => {
+    if (!grouped[entry.date]) grouped[entry.date] = {};
+    if (!grouped[entry.date][entry.client]) grouped[entry.date][entry.client] = [];
+    grouped[entry.date][entry.client].push(entry);
+  });
+  return grouped;
+}
+
+// Update client autocomplete list
+function updateClientList() {
+  const clientList = document.getElementById('client-list');
+  const uniqueClients = [...new Set(entries.map(e => e.client))].sort();
+  clientList.innerHTML = uniqueClients.map(c => `<option value="${escapeHtml(c)}">`).join('');
+}
+
 // Render function
 function render() {
   const todayString = new Date().toISOString().split('T')[0];
@@ -188,25 +206,54 @@ function render() {
   // Update toggle button
   toggleBtn.textContent = showAllEntries ? 'Show Today' : 'View All';
 
+  // Update client autocomplete
+  updateClientList();
+
   // Render entries
   if (displayEntries.length === 0) {
     entriesList.innerHTML = `<div class="empty-state">No entries for ${showAllEntries ? 'any date' : 'today'}</div>`;
-  } else {
-    entriesList.innerHTML = displayEntries.map(entry => `
-      <div class="entry-card" data-id="${entry.id}">
-        <div class="entry-header">
-          <span class="entry-date">${escapeHtml(entry.date)}</span>
-          <span class="entry-time">${escapeHtml(entry.time)}h</span>
-        </div>
-        <div class="entry-client">${escapeHtml(entry.client)}</div>
-        <div class="entry-task">${escapeHtml(entry.task)}</div>
-        <div class="entry-actions">
-          <button class="edit-btn">Edit</button>
-          <button class="delete-btn">Delete</button>
-        </div>
-      </div>
-    `).join('');
+    return;
   }
+
+  const grouped = groupByDateAndClient(displayEntries);
+  const dates = Object.keys(grouped).sort().reverse();
+  let html = '';
+
+  dates.forEach(date => {
+    // Show date heading in All Entries view
+    if (showAllEntries) {
+      html += `<div class="date-heading">${escapeHtml(date)}</div>`;
+    }
+
+    const clients = grouped[date];
+    Object.keys(clients).forEach(client => {
+      const clientEntries = clients[client];
+      const clientTotal = clientEntries.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
+
+      html += `<div class="client-group">`;
+      html += `<div class="client-group-header">`;
+      html += `<span class="client-group-name">${escapeHtml(client)}</span>`;
+      html += `<span class="client-group-hours">${clientTotal.toFixed(2)}h</span>`;
+      html += `</div>`;
+
+      clientEntries.forEach(entry => {
+        html += `<div class="task-item" data-id="${entry.id}">`;
+        html += `<div class="task-row">`;
+        html += `<span class="task-text">${escapeHtml(entry.task)}</span>`;
+        html += `<div class="task-right">`;
+        html += `<span class="task-hours">${escapeHtml(entry.time)}h</span>`;
+        html += `<button class="edit-btn">Edit</button>`;
+        html += `<button class="delete-btn">Delete</button>`;
+        html += `</div>`;
+        html += `</div>`;
+        html += `</div>`;
+      });
+
+      html += `</div>`;
+    });
+  });
+
+  entriesList.innerHTML = html;
 }
 
 // Event Listeners
@@ -238,10 +285,10 @@ taskInput.addEventListener('keypress', (e) => {
 // Event delegation for entry edit/delete buttons
 entriesList.addEventListener('click', (e) => {
   const btn = e.target;
-  const card = btn.closest('.entry-card');
-  if (!card) return;
+  const taskItem = btn.closest('.task-item');
+  if (!taskItem) return;
 
-  const id = parseInt(card.dataset.id);
+  const id = parseInt(taskItem.dataset.id);
   const entry = entries.find(e => e.id === id);
   if (!entry) return;
 
