@@ -33,6 +33,11 @@ function setStatus(type, message) {
   statusText.textContent = message;
 }
 
+// Utility: get today's date in Eastern time (YYYY-MM-DD)
+function getTodayEastern() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+
 // Utility: escape HTML to prevent XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -158,7 +163,7 @@ function cancelEdit() {
 }
 
 function resetForm() {
-  dateInput.value = new Date().toISOString().split('T')[0];
+  dateInput.value = getTodayEastern();
   clientInput.value = '';
   timeInput.value = '';
   taskInput.value = '';
@@ -228,7 +233,7 @@ clientSuggestions.addEventListener('click', (e) => {
 
 // Render function
 function render() {
-  const todayString = new Date().toISOString().split('T')[0];
+  const todayString = getTodayEastern();
   const todayEntries = entries.filter(e => e.date === todayString);
   const todayTotal = todayEntries.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
   const allEntriesTotal = entries.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
@@ -339,5 +344,5 @@ entriesList.addEventListener('click', (e) => {
 });
 
 // Initialize
-dateInput.value = new Date().toISOString().split('T')[0];
+dateInput.value = getTodayEastern();
 fetchEntries();
