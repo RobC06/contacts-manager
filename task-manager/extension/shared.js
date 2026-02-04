@@ -1,5 +1,5 @@
 // API Configuration - YOU WILL UPDATE THIS AFTER DEPLOYING TO RAILWAY
-const API_URL = 'https://your-app-name.railway.app/api';
+const API_URL = 'https://robc06-production-6a10.up.railway.app/api';
 
 // Shared utility functions
 class TaskManager {
