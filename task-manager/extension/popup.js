@@ -47,9 +47,14 @@ function setupEventListeners() {
     renderTasks();
   });
 
-  // Open sidepanel
-  document.getElementById('open-sidepanel-btn').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'openSidePanel' });
+  // Open sidepanel - must call directly from popup for user gesture to work
+  document.getElementById('open-sidepanel-btn').addEventListener('click', async () => {
+    try {
+      const currentWindow = await chrome.windows.getCurrent();
+      await chrome.sidePanel.open({ windowId: currentWindow.id });
+    } catch (err) {
+      console.error('Error opening side panel:', err);
+    }
   });
 }
 
