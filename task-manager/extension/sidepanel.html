@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Task Manager - Side Panel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="sidepanel-body">
+  <div id="auth-container" class="auth-container">
+    <h2>Task Manager Pro</h2>
+    <div id="login-form">
+      <input type="email" id="login-email" placeholder="Email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button id="login-btn">Login</button>
+      <p class="auth-switch">Don't have an account? <a href="#" id="show-register">Register</a></p>
+    </div>
+    <div id="register-form" style="display: none;">
+      <input type="text" id="register-name" placeholder="Name" />
+      <input type="email" id="register-email" placeholder="Email" />
+      <input type="password" id="register-password" placeholder="Password" />
+      <button id="register-btn">Register</button>
+      <p class="auth-switch">Already have an account? <a href="#" id="show-login">Login</a></p>
+    </div>
+    <div id="auth-error" class="error-message"></div>
+  </div>
+
+  <div id="main-container" style="display: none;">
+    <div class="header">
+      <h2>My Tasks</h2>
+      <button id="logout-btn" class="logout-btn">Logout</button>
+    </div>
+
+    <div class="add-task-form">
+      <input type="text" id="client-input" placeholder="Client" list="client-list" />
+      <datalist id="client-list"></datalist>
+      <input type="text" id="task-input" placeholder="Task" />
+      <button id="add-task-btn">Add Task</button>
+    </div>
+
+    <div class="sort-controls">
+      <label>
+        <input type="checkbox" id="sort-by-client" />
+        Sort by Client
+      </label>
+    </div>
+
+    <div id="tasks-container" class="tasks-container"></div>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
