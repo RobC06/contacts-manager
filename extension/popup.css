@@ -222,8 +222,9 @@ body {
 }
 
 .date-heading .date-total {
-  color: #69F0AE;
-  font-weight: 600;
+  color: #007bff;
+  font-weight: 700;
+  font-style: italic;
 }
 
 .date-heading:not(:first-child) {
