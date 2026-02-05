@@ -104,9 +104,17 @@ async function loadContacts() {
 
       // Restore sort
       if (state.sortField) {
-        currentSort.field = state.sortField;
-        currentSort.direction = state.sortDirection || 'asc';
+        // Reset currentSort to avoid toggle logic in sortContacts
+        currentSort.field = null;
+        currentSort.direction = 'asc';
+
+        // First call sets field and direction to 'asc'
         sortContacts(state.sortField);
+
+        // If saved direction was 'desc', call again to toggle to 'desc'
+        if (state.sortDirection === 'desc') {
+          sortContacts(state.sortField);
+        }
       }
 
       // Apply filters
