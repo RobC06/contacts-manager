@@ -155,6 +155,19 @@ function renderContacts(filteredContacts = null) {
           : escapeHtml(contact.followUpNotes))
       : '-';
 
+    // Get most recent communication
+    let contactNotes = '-';
+    if (contact.communications && contact.communications.length > 0) {
+      const sortedComms = [...contact.communications].sort((a, b) =>
+        new Date(b.date) - new Date(a.date)
+      );
+      const mostRecent = sortedComms[0];
+      const commType = (mostRecent.type || 'other').charAt(0).toUpperCase() + (mostRecent.type || 'other').slice(1);
+      const commDesc = mostRecent.description || '';
+      const truncatedDesc = commDesc.length > 50 ? commDesc.substring(0, 50) + '...' : commDesc;
+      contactNotes = `${commType}-- ${truncatedDesc}`;
+    }
+
     return `
       <tr data-id="${contact.id}">
         <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
@@ -162,6 +175,7 @@ function renderContacts(filteredContacts = null) {
         <td>${escapeHtml(contact.company) || '-'}</td>
         <td>${escapeHtml(contact.title) || '-'}</td>
         <td>${lastContactDate || '-'}</td>
+        <td title="${escapeHtml(contactNotes)}">${escapeHtml(contactNotes)}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
         <td>${contact.followUpDate || '-'}</td>
         <td title="${escapeHtml(contact.followUpNotes || '')}">${truncatedNotes}</td>
