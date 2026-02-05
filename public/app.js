@@ -155,17 +155,25 @@ function renderContacts(filteredContacts = null) {
           : escapeHtml(contact.followUpNotes))
       : '-';
 
-    // Get most recent communication
+    // Get most recent communication (excluding monday.com imports)
     let contactNotes = '-';
     if (contact.communications && contact.communications.length > 0) {
-      const sortedComms = [...contact.communications].sort((a, b) =>
-        new Date(b.date) - new Date(a.date)
-      );
-      const mostRecent = sortedComms[0];
-      const commType = (mostRecent.type || 'other').charAt(0).toUpperCase() + (mostRecent.type || 'other').slice(1);
-      const commDesc = mostRecent.description || '';
-      const truncatedDesc = commDesc.length > 50 ? commDesc.substring(0, 50) + '...' : commDesc;
-      contactNotes = `${commType}-- ${truncatedDesc}`;
+      // Filter out monday.com imports
+      const filteredComms = contact.communications.filter(comm => {
+        const desc = (comm.description || '').toLowerCase();
+        return !desc.includes('monday.com');
+      });
+
+      if (filteredComms.length > 0) {
+        const sortedComms = [...filteredComms].sort((a, b) =>
+          new Date(b.date) - new Date(a.date)
+        );
+        const mostRecent = sortedComms[0];
+        const commType = (mostRecent.type || 'other').charAt(0).toUpperCase() + (mostRecent.type || 'other').slice(1);
+        const commDesc = mostRecent.description || '';
+        const truncatedDesc = commDesc.length > 50 ? commDesc.substring(0, 50) + '...' : commDesc;
+        contactNotes = `${commType}-- ${truncatedDesc}`;
+      }
     }
 
     return `
