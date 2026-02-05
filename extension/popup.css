@@ -225,7 +225,7 @@ body {
 }
 
 .date-section:nth-child(odd) {
-  background-color: rgba(0, 123, 255, 0.06);
+  background-color: rgba(0, 123, 255, 0.12);
 }
 
 .date-section:nth-child(even) {
