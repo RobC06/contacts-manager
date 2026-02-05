@@ -58,7 +58,8 @@ body {
 #header-stats {
   font-size: 13px;
   margin-top: 4px;
-  opacity: 0.9;
+  color: #69F0AE;
+  font-weight: 500;
 }
 
 /* Form Section */
@@ -209,12 +210,20 @@ body {
 
 /* Date Heading (All Entries view) */
 .date-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 12px;
   font-weight: 600;
   color: #6c757d;
   padding: 8px 0 4px 0;
   margin-bottom: 8px;
   border-bottom: 1px solid #d0d0d0;
+}
+
+.date-heading .date-total {
+  color: #69F0AE;
+  font-weight: 600;
 }
 
 .date-heading:not(:first-child) {

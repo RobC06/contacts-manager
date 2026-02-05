@@ -264,12 +264,20 @@ function render() {
   let html = '';
 
   dates.forEach(date => {
+    const clients = grouped[date];
+
+    // Calculate daily total for date heading
+    let dayTotal = 0;
+    Object.keys(clients).forEach(clientKey => {
+      clients[clientKey].entries.forEach(e => {
+        dayTotal += parseFloat(e.time || 0);
+      });
+    });
+
     // Show date heading in All Entries view
     if (showAllEntries) {
-      html += `<div class="date-heading">${escapeHtml(date)}</div>`;
+      html += `<div class="date-heading"><span>${escapeHtml(date)}</span><span class="date-total">${dayTotal.toFixed(2)}h</span></div>`;
     }
-
-    const clients = grouped[date];
     Object.keys(clients).forEach(clientKey => {
       const { displayName, entries: clientEntries } = clients[clientKey];
       const clientTotal = clientEntries.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
