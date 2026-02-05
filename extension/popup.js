@@ -274,10 +274,12 @@ function render() {
       });
     });
 
-    // Show date heading in All Entries view
+    // Wrap in date-section for alternating shading (View All mode only)
     if (showAllEntries) {
+      html += `<div class="date-section">`;
       html += `<div class="date-heading"><span>${escapeHtml(date)}</span><span class="date-total">${dayTotal.toFixed(2)}h</span></div>`;
     }
+
     Object.keys(clients).forEach(clientKey => {
       const { displayName, entries: clientEntries } = clients[clientKey];
       const clientTotal = clientEntries.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
@@ -303,6 +305,11 @@ function render() {
 
       html += `</div>`;
     });
+
+    // Close date-section wrapper
+    if (showAllEntries) {
+      html += `</div>`;
+    }
   });
 
   entriesList.innerHTML = html;
