@@ -28,7 +28,33 @@ mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
+.then(async () => {
+  console.log('Connected to MongoDB');
+
+  // Clean up existing contacts: clear follow-up dates for "waiting for response" and "no action" tags
+  try {
+    const result = await Contact.updateMany(
+      {
+        tag: { $in: ['waiting for response', 'no action'] },
+        $or: [
+          { followUpDate: { $ne: null } },
+          { dontSendEmail: true }
+        ]
+      },
+      {
+        $set: {
+          followUpDate: null,
+          dontSendEmail: false
+        }
+      }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[CLEANUP] Cleared follow-up dates for ${result.modifiedCount} contact(s) with 'waiting for response' or 'no action' tags`);
+    }
+  } catch (cleanupError) {
+    console.error('[CLEANUP] Error cleaning up contacts:', cleanupError);
+  }
+})
 .catch(err => {
   console.error('MongoDB connection error:', err);
   process.exit(1);
@@ -322,7 +348,14 @@ app.put('/api/contacts/:id', requireAuth, async (req, res) => {
     if (req.body.followUpDate !== undefined) contact.followUpDate = req.body.followUpDate;
     if (req.body.followUpRequired !== undefined) contact.followUpRequired = req.body.followUpRequired;
     if (req.body.followUpNotes !== undefined) contact.followUpNotes = req.body.followUpNotes;
+    if (req.body.dontSendEmail !== undefined) contact.dontSendEmail = req.body.dontSendEmail;
     if (req.body.communications !== undefined) contact.communications = req.body.communications;
+
+    // Clear follow-up date if tag is "waiting for response" or "no action"
+    if (contact.tag === 'waiting for response' || contact.tag === 'no action') {
+      contact.followUpDate = null;
+      contact.dontSendEmail = false;
+    }
 
     await contact.save();
 

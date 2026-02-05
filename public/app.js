@@ -84,7 +84,39 @@ async function loadContacts() {
   try {
     const response = await fetch('/api/contacts');
     contacts = await response.json();
-    renderContacts();
+
+    // Restore saved state if it exists
+    const savedState = localStorage.getItem('contactListState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+
+      // Restore search term
+      if (state.searchTerm) {
+        searchInput.value = state.searchTerm;
+      }
+
+      // Restore tag filters
+      if (state.selectedTags && state.selectedTags.length > 0) {
+        document.querySelectorAll('.tag-filter').forEach(checkbox => {
+          checkbox.checked = state.selectedTags.includes(checkbox.value);
+        });
+      }
+
+      // Restore sort
+      if (state.sortField) {
+        currentSort.field = state.sortField;
+        currentSort.direction = state.sortDirection || 'asc';
+        sortContacts(state.sortField);
+      }
+
+      // Apply filters
+      filterContacts(searchInput.value);
+
+      // Clear the saved state
+      localStorage.removeItem('contactListState');
+    } else {
+      renderContacts();
+    }
   } catch (error) {
     console.error('Failed to load contacts:', error);
     showToast('Failed to load contacts', 'error');
@@ -232,6 +264,15 @@ function sortContacts(field) {
 
 // View contact details
 function viewContact(contactId) {
+  // Save current state before navigating
+  const state = {
+    searchTerm: searchInput.value,
+    selectedTags: Array.from(document.querySelectorAll('.tag-filter:checked')).map(cb => cb.value),
+    sortField: currentSort.field,
+    sortDirection: currentSort.direction
+  };
+  localStorage.setItem('contactListState', JSON.stringify(state));
+
   window.location.href = `contact.html?id=${contactId}`;
 }
 

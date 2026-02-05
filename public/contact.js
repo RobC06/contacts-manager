@@ -518,6 +518,15 @@ function setupEventListeners() {
       communicationModal.style.display = 'none';
     }
   });
+
+  // Clear follow-up date when tag is "Waiting for response" or "No action"
+  document.getElementById('contactTag').addEventListener('change', (e) => {
+    const tag = e.target.value;
+    if (tag === 'waiting for response' || tag === 'no action') {
+      document.getElementById('contactFollowUpDate').value = '';
+      document.getElementById('dontSendEmail').checked = false;
+    }
+  });
 }
 
 // Utility functions
