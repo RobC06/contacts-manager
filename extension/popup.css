@@ -229,7 +229,7 @@ body {
 }
 
 .date-section:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(0, 150, 136, 0.15);
 }
 
 /* Date Heading (All Entries view) */
