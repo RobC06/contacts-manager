@@ -225,11 +225,11 @@ body {
 }
 
 .date-section:nth-child(odd) {
-  background-color: rgba(0, 123, 255, 0.15);
+  background-color: rgba(0, 123, 255, 0.22);
 }
 
 .date-section:nth-child(even) {
-  background-color: rgba(0, 150, 136, 0.15);
+  background-color: rgba(0, 150, 136, 0.30);
 }
 
 /* Date Heading (All Entries view) */
