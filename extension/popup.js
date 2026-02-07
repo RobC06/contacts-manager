@@ -2,6 +2,7 @@
 let entries = [];
 let editingId = null;
 let showAllEntries = false;
+let selectedIds = new Set();
 
 // DOM Elements
 const dateInput = document.getElementById('date-input');
@@ -20,6 +21,12 @@ const headerStats = document.getElementById('header-stats');
 // Status elements
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
+
+// Selection elements
+const selectionToolbar = document.getElementById('selection-toolbar');
+const selectAllCheckbox = document.getElementById('select-all-checkbox');
+const selectedCount = document.getElementById('selected-count');
+const deleteSelectedBtn = document.getElementById('delete-selected-btn');
 
 function setStatus(type, message) {
   statusDot.className = '';
@@ -114,6 +121,7 @@ async function deleteEntry(id) {
     });
     if (response.ok) {
       entries = entries.filter(e => e.id !== id);
+      selectedIds.delete(id);
       setStatus('connected', 'Deleted');
     } else {
       setStatus('error', 'Failed to delete — server error');
@@ -123,6 +131,82 @@ async function deleteEntry(id) {
     setStatus('error', 'Failed to delete — cannot reach server');
   }
   render();
+}
+
+async function deleteSelectedEntries() {
+  if (selectedIds.size === 0) return;
+
+  const idsToDelete = [...selectedIds];
+  const total = idsToDelete.length;
+  let deleted = 0;
+  let failed = 0;
+
+  setStatus('saving', `Deleting ${total} entries...`);
+
+  for (const id of idsToDelete) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/time-entries/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        entries = entries.filter(e => e.id !== id);
+        selectedIds.delete(id);
+        deleted++;
+      } else {
+        failed++;
+      }
+    } catch (error) {
+      console.error('Failed to delete entry:', id, error);
+      failed++;
+    }
+  }
+
+  if (failed === 0) {
+    setStatus('connected', `Deleted ${deleted} entries`);
+  } else {
+    setStatus('error', `Deleted ${deleted}, failed ${failed}`);
+  }
+
+  render();
+}
+
+function updateSelectionUI() {
+  const displayEntries = showAllEntries ? entries : entries.filter(e => e.date === getTodayEastern());
+  const allIds = displayEntries.map(e => e.id);
+  const selectedInView = allIds.filter(id => selectedIds.has(id)).length;
+
+  selectedCount.textContent = `${selectedIds.size} selected`;
+  deleteSelectedBtn.disabled = selectedIds.size === 0;
+  selectAllCheckbox.checked = allIds.length > 0 && selectedInView === allIds.length;
+  selectAllCheckbox.indeterminate = selectedInView > 0 && selectedInView < allIds.length;
+}
+
+function toggleSelectAll() {
+  const displayEntries = showAllEntries ? entries : entries.filter(e => e.date === getTodayEastern());
+  const allIds = displayEntries.map(e => e.id);
+  const allSelected = allIds.every(id => selectedIds.has(id));
+
+  if (allSelected) {
+    // Deselect all
+    allIds.forEach(id => selectedIds.delete(id));
+  } else {
+    // Select all
+    allIds.forEach(id => selectedIds.add(id));
+  }
+
+  render();
+}
+
+function toggleEntrySelection(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  updateSelectionUI();
+  // Update just the checkbox without full re-render
+  const checkbox = document.querySelector(`.entry-checkbox[data-id="${id}"]`);
+  if (checkbox) checkbox.checked = selectedIds.has(id);
 }
 
 // Event Handlers
@@ -253,6 +337,15 @@ function render() {
   // Update toggle button
   toggleBtn.textContent = showAllEntries ? 'Show Today' : 'View All';
 
+  // Show/hide selection toolbar
+  selectionToolbar.style.display = showAllEntries ? 'flex' : 'none';
+  if (showAllEntries) {
+    updateSelectionUI();
+  } else {
+    // Clear selections when switching to Today view
+    selectedIds.clear();
+  }
+
   // Render entries
   if (displayEntries.length === 0) {
     entriesList.innerHTML = `<div class="empty-state">No entries for ${showAllEntries ? 'any date' : 'today'}</div>`;
@@ -291,8 +384,12 @@ function render() {
       html += `</div>`;
 
       clientEntries.forEach(entry => {
+        const isChecked = selectedIds.has(entry.id) ? 'checked' : '';
         html += `<div class="task-item" data-id="${entry.id}">`;
-        html += `<div class="task-row">`;
+        html += `<div class="task-row${showAllEntries ? ' task-row-selectable' : ''}">`;
+        if (showAllEntries) {
+          html += `<input type="checkbox" class="entry-checkbox" data-id="${entry.id}" ${isChecked}>`;
+        }
         html += `<span class="task-text">${escapeHtml(entry.task)}</span>`;
         html += `<div class="task-right">`;
         html += `<span class="task-hours">${escapeHtml(entry.time)}h</span>`;
@@ -341,20 +438,32 @@ taskInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') handleSubmit();
 });
 
-// Event delegation for entry edit/delete buttons
+// Event delegation for entry edit/delete buttons and checkboxes
 entriesList.addEventListener('click', (e) => {
-  const btn = e.target;
-  const taskItem = btn.closest('.task-item');
+  const target = e.target;
+  const taskItem = target.closest('.task-item');
   if (!taskItem) return;
 
   const id = parseInt(taskItem.dataset.id);
   const entry = entries.find(e => e.id === id);
   if (!entry) return;
 
-  if (btn.classList.contains('edit-btn')) {
+  if (target.classList.contains('entry-checkbox')) {
+    toggleEntrySelection(id);
+  } else if (target.classList.contains('edit-btn')) {
     handleEdit(entry);
-  } else if (btn.classList.contains('delete-btn')) {
+  } else if (target.classList.contains('delete-btn')) {
     deleteEntry(id);
+  }
+});
+
+// Selection toolbar event listeners
+selectAllCheckbox.addEventListener('change', toggleSelectAll);
+
+deleteSelectedBtn.addEventListener('click', () => {
+  if (selectedIds.size === 0) return;
+  if (confirm(`Are you sure you want to delete ${selectedIds.size} entries?`)) {
+    deleteSelectedEntries();
   }
 });
 
