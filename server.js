@@ -14,6 +14,7 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const Contact = require('./models/Contact');
 const TimeEntry = require('./models/TimeEntry');
+const ClientName = require('./models/ClientName');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,10 +53,20 @@ app.use(session({
   }
 }));
 
-// CORS middleware for browser extension (time-entries API)
+// CORS middleware for browser extension (time-entries and client-names APIs)
 app.use('/api/time-entries', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.use('/api/client-names', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
@@ -564,6 +575,45 @@ app.delete('/api/time-entries/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting time entry:', error);
     res.status(500).json({ error: 'Failed to delete time entry' });
+  }
+});
+
+// Client Names API (for browser extension autocomplete)
+
+// Get all client names
+app.get('/api/client-names', async (req, res) => {
+  try {
+    const clientNames = await ClientName.find().sort({ name: 1 });
+    res.json(clientNames.map(c => c.name));
+  } catch (error) {
+    console.error('Error fetching client names:', error);
+    res.status(500).json({ error: 'Failed to fetch client names' });
+  }
+});
+
+// Add a new client name (if not exists)
+app.post('/api/client-names', async (req, res) => {
+  try {
+    const name = req.body.name?.trim();
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    // Check if already exists (case-insensitive)
+    const existing = await ClientName.findOne({
+      name: { $regex: new RegExp(`^${name}$`, 'i') }
+    });
+
+    if (existing) {
+      return res.json({ name: existing.name, exists: true });
+    }
+
+    const clientName = new ClientName({ name });
+    await clientName.save();
+    res.status(201).json({ name: clientName.name, exists: false });
+  } catch (error) {
+    console.error('Error saving client name:', error);
+    res.status(500).json({ error: 'Failed to save client name' });
   }
 });
 

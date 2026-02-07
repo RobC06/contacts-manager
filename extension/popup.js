@@ -3,6 +3,7 @@ let entries = [];
 let editingId = null;
 let showAllEntries = false;
 let selectedIds = new Set();
+let savedClientNames = []; // Persistent client names from database
 
 // DOM Elements
 const dateInput = document.getElementById('date-input');
@@ -69,6 +70,32 @@ async function fetchEntries() {
   render();
 }
 
+async function fetchClientNames() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/client-names`);
+    if (response.ok) {
+      savedClientNames = await response.json();
+    }
+  } catch (error) {
+    console.error('Failed to fetch client names:', error);
+  }
+}
+
+async function saveClientName(name) {
+  if (!name || !name.trim()) return;
+  try {
+    await fetch(`${API_BASE_URL}/api/client-names`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() })
+    });
+    // Refresh the list
+    await fetchClientNames();
+  } catch (error) {
+    console.error('Failed to save client name:', error);
+  }
+}
+
 async function createEntry(entry) {
   setStatus('saving', 'Saving...');
   try {
@@ -80,6 +107,8 @@ async function createEntry(entry) {
     if (response.ok) {
       const newEntry = await response.json();
       entries.unshift(newEntry);
+      // Save the client name for future autocomplete
+      saveClientName(entry.client);
       setStatus('connected', 'Saved');
     } else {
       setStatus('error', 'Failed to save — server error');
@@ -276,6 +305,12 @@ const clientSuggestions = document.getElementById('client-suggestions');
 
 function getUniqueClients() {
   const seen = {};
+  // Include saved client names from database
+  savedClientNames.forEach(name => {
+    const key = name.trim().toLowerCase();
+    if (!seen[key]) seen[key] = name.trim();
+  });
+  // Also include any from current entries (in case not yet saved)
   entries.forEach(e => {
     const key = e.client.trim().toLowerCase();
     if (!seen[key]) seen[key] = e.client.trim();
@@ -469,4 +504,5 @@ deleteSelectedBtn.addEventListener('click', () => {
 
 // Initialize
 dateInput.value = getTodayEastern();
+fetchClientNames(); // Load saved client names for autocomplete
 fetchEntries();
