@@ -11,8 +11,7 @@ body {
 
 #app {
   width: 380px;
-  min-height: 500px;
-  max-height: 600px;
+  min-height: 400px;
   display: flex;
   flex-direction: column;
   font-family: system-ui, sans-serif;
@@ -20,6 +19,16 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
+}
+
+/* Full-page mode (when opened in new tab) */
+@media (min-width: 500px) {
+  #app {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    min-height: 80vh;
+  }
 }
 
 /* Header */
@@ -58,7 +67,8 @@ body {
 #header-stats {
   font-size: 13px;
   margin-top: 4px;
-  opacity: 0.9;
+  color: #69F0AE;
+  font-weight: 500;
 }
 
 /* Form Section */
@@ -207,18 +217,38 @@ body {
   font-size: 13px;
 }
 
+/* Date Section (groups date heading + entries for alternating shading) */
+.date-section {
+  padding: 8px 10px;
+  margin: 0 -10px;
+  border-radius: 4px;
+}
+
+.date-section:nth-child(odd) {
+  background-color: rgba(0, 123, 255, 0.22);
+}
+
+.date-section:nth-child(even) {
+  background-color: rgba(0, 150, 136, 0.30);
+}
+
 /* Date Heading (All Entries view) */
 .date-heading {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6c757d;
-  padding: 8px 0 4px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  padding: 4px 0 6px 0;
   margin-bottom: 8px;
   border-bottom: 1px solid #d0d0d0;
 }
 
-.date-heading:not(:first-child) {
-  margin-top: 6px;
+.date-heading .date-total {
+  color: #007bff;
+  font-weight: 700;
+  font-style: italic;
 }
 
 /* Client Group */
@@ -338,4 +368,69 @@ body {
 
 #status-dot.saving {
   background-color: #ffc107;
+}
+
+/* Selection Toolbar */
+#selection-toolbar {
+  padding: 8px 15px;
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #d0d0d0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+}
+
+.select-all-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+#selected-count {
+  color: #6c757d;
+  flex: 1;
+}
+
+#delete-selected-btn {
+  padding: 5px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#delete-selected-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#delete-selected-btn:not(:disabled):hover {
+  background-color: #c82333;
+}
+
+/* Entry Checkbox */
+.entry-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.task-row-selectable {
+  display: flex;
+  align-items: center;
 }
