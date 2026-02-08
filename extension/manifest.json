@@ -1,15 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Time Tracker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Track your time entries with a simple, clean interface",
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "commands": {
     "_execute_action": {
@@ -20,7 +25,9 @@
       "description": "Open Time Tracker"
     }
   },
-  "permissions": [],
+  "permissions": [
+    "sidePanel"
+  ],
   "host_permissions": [
     "http://localhost:3000/*",
     "https://*.railway.app/*"
