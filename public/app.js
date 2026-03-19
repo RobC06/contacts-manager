@@ -444,6 +444,38 @@ async function sendTestEmail() {
   }
 }
 
+// Send test weekly time backup email
+async function sendTestTimeBackup() {
+  const button = document.getElementById('testTimeBackupBtn');
+  const originalText = button.textContent;
+
+  try {
+    button.disabled = true;
+    button.textContent = 'Sending...';
+
+    const response = await fetch('/api/test-time-backup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showToast(`Weekly backup sent! ${data.entriesFound} entries, ${data.totalHours}h total. Check your inbox.`, 'success');
+    } else {
+      showToast(data.error || 'Failed to send backup email', 'error');
+    }
+  } catch (error) {
+    console.error('Failed to send time backup email:', error);
+    showToast('Failed to send time backup email', 'error');
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
+
 // Setup event listeners
 function setupEventListeners() {
   // Search
@@ -505,6 +537,9 @@ function setupEventListeners() {
 
   // Test email button
   document.getElementById('testEmailBtn').addEventListener('click', sendTestEmail);
+
+  // Test time backup button
+  document.getElementById('testTimeBackupBtn').addEventListener('click', sendTestTimeBackup);
 
   // Removed click-outside-to-close to prevent accidental data loss
   // Users must click the X button or Cancel button to close modals

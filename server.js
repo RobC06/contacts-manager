@@ -911,6 +911,155 @@ cron.schedule('30 8 * * *', async () => {
 
 console.log('[CRON] Scheduled follow-up email job scheduled for 8:30 AM EST daily');
 
+// Weekly Time Entry Backup Email - Saturdays at 10:00 AM Eastern Time
+cron.schedule('0 10 * * 6', async () => {
+  const now = new Date();
+
+  console.log('========================================');
+  console.log('[CRON-TIME-BACKUP] Weekly time entry backup email running...');
+  console.log(`[CRON-TIME-BACKUP] Current time: ${now.toISOString()}`);
+  console.log('========================================');
+
+  try {
+    const user = await User.findOne();
+    if (!user) {
+      console.log('[CRON-TIME-BACKUP] No user found, skipping email');
+      return;
+    }
+
+    if (!user.email || !user.smtpUser || !user.smtpPassword) {
+      console.log('[CRON-TIME-BACKUP] Email not configured, skipping');
+      return;
+    }
+
+    // Get date range in Eastern time (use setDate to properly handle DST)
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const weekAgoDate = new Date();
+    weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+    const weekAgo = weekAgoDate.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+
+    console.log(`[CRON-TIME-BACKUP] Fetching entries from ${weekAgo} to ${today}`);
+
+    // Fetch time entries from the past week
+    const timeEntries = await TimeEntry.find({
+      date: { $gte: weekAgo, $lte: today }
+    }).sort({ date: -1 });
+
+    console.log(`[CRON-TIME-BACKUP] Found ${timeEntries.length} entries`);
+
+    if (timeEntries.length === 0) {
+      console.log('[CRON-TIME-BACKUP] No entries this week, skipping email');
+      return;
+    }
+
+    // Group by date, then by client
+    const groupedByDate = {};
+    let grandTotal = 0;
+
+    timeEntries.forEach(entry => {
+      const dateKey = entry.date;
+      const clientKey = entry.client.trim();
+      const hours = parseFloat(entry.time) || 0;
+      grandTotal += hours;
+
+      if (!groupedByDate[dateKey]) {
+        groupedByDate[dateKey] = { clients: {}, total: 0 };
+      }
+      groupedByDate[dateKey].total += hours;
+
+      if (!groupedByDate[dateKey].clients[clientKey]) {
+        groupedByDate[dateKey].clients[clientKey] = { entries: [], total: 0 };
+      }
+      groupedByDate[dateKey].clients[clientKey].entries.push(entry);
+      groupedByDate[dateKey].clients[clientKey].total += hours;
+    });
+
+    // Build HTML email
+    let htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #495057; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
+          Weekly Time Entry Backup
+        </h2>
+        <p style="color: #6c757d; font-size: 14px;">
+          Week of ${weekAgo} to ${today}
+        </p>
+        <p style="background-color: #007bff; color: white; padding: 10px 15px; border-radius: 4px; font-size: 16px; font-weight: bold;">
+          Total Hours This Week: ${grandTotal.toFixed(2)}
+        </p>
+    `;
+
+    // Sort dates descending
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
+
+    sortedDates.forEach(date => {
+      const dateData = groupedByDate[date];
+      const formattedDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      htmlContent += `
+        <div style="margin-top: 20px; border: 1px solid #d0d0d0; border-radius: 6px; overflow: hidden;">
+          <div style="background-color: #495057; color: white; padding: 10px 15px; display: flex; justify-content: space-between;">
+            <strong>${formattedDate}</strong>
+            <span style="color: #69F0AE; font-weight: bold;">${dateData.total.toFixed(2)} hrs</span>
+          </div>
+      `;
+
+      // Sort clients alphabetically
+      const sortedClients = Object.keys(dateData.clients).sort();
+
+      sortedClients.forEach(client => {
+        const clientData = dateData.clients[client];
+        htmlContent += `
+          <div style="border-bottom: 1px solid #e0e0e0;">
+            <div style="background-color: #f0f0f0; padding: 8px 15px; display: flex; justify-content: space-between;">
+              <strong style="color: #212529;">${client}</strong>
+              <span style="color: #007bff; font-weight: 600;">${clientData.total.toFixed(2)} hrs</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+        `;
+
+        clientData.entries.forEach(entry => {
+          htmlContent += `
+              <tr>
+                <td style="padding: 6px 15px; color: #495057; font-size: 14px;">${entry.task}</td>
+                <td style="padding: 6px 15px; color: #6c757d; font-size: 13px; text-align: right; width: 60px;">${entry.time} hrs</td>
+              </tr>
+          `;
+        });
+
+        htmlContent += `
+            </table>
+          </div>
+        `;
+      });
+
+      htmlContent += `</div>`;
+    });
+
+    htmlContent += `
+        <p style="margin-top: 20px; color: #6c757d; font-size: 12px; text-align: center;">
+          This is an automated weekly backup from your Time Tracker.
+        </p>
+      </div>
+    `;
+
+    const subject = `Time Entry Backup - Week of ${weekAgo}`;
+    await sendEmailViaBrevoAPI(user, subject, htmlContent);
+    console.log('[CRON-TIME-BACKUP] ✓ Weekly time entry backup email sent successfully');
+
+  } catch (error) {
+    console.error('[CRON-TIME-BACKUP] Error sending weekly backup email:', error.message);
+  }
+}, {
+  timezone: 'America/New_York'
+});
+
+console.log('[CRON] Weekly time entry backup email scheduled for Saturdays at 10:00 AM EST');
+
 // Test email endpoint - sends a test email to verify SMTP configuration
 app.post('/api/test-email', requireAuth, async (req, res) => {
   try {
@@ -1036,6 +1185,157 @@ app.post('/api/test-email', requireAuth, async (req, res) => {
     console.error('[TEST-EMAIL] ✗ Failed to send test email:', error);
     res.status(500).json({
       error: 'Failed to send test email: ' + error.message
+    });
+  }
+});
+
+// Test weekly time backup email endpoint - manually triggers the weekly backup
+app.post('/api/test-time-backup', requireAuth, async (req, res) => {
+  try {
+    console.log('[TEST-TIME-BACKUP] Manual weekly backup email test requested');
+
+    const user = await User.findById(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.email || !user.smtpUser || !user.smtpPassword) {
+      return res.status(400).json({
+        error: 'Email configuration incomplete. Please configure email settings first.'
+      });
+    }
+
+    // Get date range (same logic as cron job)
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const weekAgoDate = new Date();
+    weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+    const weekAgo = weekAgoDate.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+
+    console.log(`[TEST-TIME-BACKUP] Date range: ${weekAgo} to ${today}`);
+
+    // Fetch time entries
+    const timeEntries = await TimeEntry.find({
+      date: { $gte: weekAgo, $lte: today }
+    }).sort({ date: -1 });
+
+    console.log(`[TEST-TIME-BACKUP] Found ${timeEntries.length} entries`);
+
+    if (timeEntries.length === 0) {
+      return res.status(400).json({
+        error: `No time entries found between ${weekAgo} and ${today}. Add some entries first.`,
+        dateRange: { from: weekAgo, to: today }
+      });
+    }
+
+    // Group by date, then by client
+    const groupedByDate = {};
+    let grandTotal = 0;
+
+    timeEntries.forEach(entry => {
+      const dateKey = entry.date;
+      const clientKey = entry.client.trim();
+      const hours = parseFloat(entry.time) || 0;
+      grandTotal += hours;
+
+      if (!groupedByDate[dateKey]) {
+        groupedByDate[dateKey] = { clients: {}, total: 0 };
+      }
+      groupedByDate[dateKey].total += hours;
+
+      if (!groupedByDate[dateKey].clients[clientKey]) {
+        groupedByDate[dateKey].clients[clientKey] = { entries: [], total: 0 };
+      }
+      groupedByDate[dateKey].clients[clientKey].entries.push(entry);
+      groupedByDate[dateKey].clients[clientKey].total += hours;
+    });
+
+    // Build HTML email
+    let htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #495057; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
+          Weekly Time Entry Backup (Test)
+        </h2>
+        <p style="color: #6c757d; font-size: 14px;">
+          Week of ${weekAgo} to ${today}
+        </p>
+        <p style="background-color: #007bff; color: white; padding: 10px 15px; border-radius: 4px; font-size: 16px; font-weight: bold;">
+          Total Hours This Week: ${grandTotal.toFixed(2)}
+        </p>
+    `;
+
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
+
+    sortedDates.forEach(date => {
+      const dateData = groupedByDate[date];
+      const formattedDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      htmlContent += `
+        <div style="margin-top: 20px; border: 1px solid #d0d0d0; border-radius: 6px; overflow: hidden;">
+          <div style="background-color: #495057; color: white; padding: 10px 15px; display: flex; justify-content: space-between;">
+            <strong>${formattedDate}</strong>
+            <span style="color: #69F0AE; font-weight: bold;">${dateData.total.toFixed(2)} hrs</span>
+          </div>
+      `;
+
+      const sortedClients = Object.keys(dateData.clients).sort();
+
+      sortedClients.forEach(client => {
+        const clientData = dateData.clients[client];
+        htmlContent += `
+          <div style="border-bottom: 1px solid #e0e0e0;">
+            <div style="background-color: #f0f0f0; padding: 8px 15px; display: flex; justify-content: space-between;">
+              <strong style="color: #212529;">${client}</strong>
+              <span style="color: #007bff; font-weight: 600;">${clientData.total.toFixed(2)} hrs</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+        `;
+
+        clientData.entries.forEach(entry => {
+          htmlContent += `
+              <tr>
+                <td style="padding: 6px 15px; color: #495057; font-size: 14px;">${entry.task}</td>
+                <td style="padding: 6px 15px; color: #6c757d; font-size: 13px; text-align: right; width: 60px;">${entry.time} hrs</td>
+              </tr>
+          `;
+        });
+
+        htmlContent += `
+            </table>
+          </div>
+        `;
+      });
+
+      htmlContent += `</div>`;
+    });
+
+    htmlContent += `
+        <p style="margin-top: 20px; color: #6c757d; font-size: 12px; text-align: center;">
+          This is a test email from your Time Tracker.
+        </p>
+      </div>
+    `;
+
+    const subject = `Time Entry Backup (Test) - Week of ${weekAgo}`;
+    await sendEmailViaBrevoAPI(user, subject, htmlContent);
+
+    console.log('[TEST-TIME-BACKUP] ✓ Test backup email sent successfully');
+
+    res.json({
+      message: 'Weekly backup email sent successfully! Check your inbox.',
+      recipient: user.email,
+      dateRange: { from: weekAgo, to: today },
+      entriesFound: timeEntries.length,
+      totalHours: grandTotal.toFixed(2)
+    });
+  } catch (error) {
+    console.error('[TEST-TIME-BACKUP] ✗ Failed to send test backup email:', error);
+    res.status(500).json({
+      error: 'Failed to send test backup email: ' + error.message
     });
   }
 });
