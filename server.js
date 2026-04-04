@@ -738,7 +738,7 @@ app.put('/api/config', requireAuth, async (req, res) => {
 async function sendEmailViaBrevoAPI(user, subject, htmlContent) {
   const emailData = {
     sender: {
-      name: user.smtpFromName || 'Contact Outreach Manager',
+      name: 'Contact Outreach Manager',
       email: user.smtpUser // Brevo verified sender email
     },
     to: [{
@@ -938,7 +938,7 @@ app.post('/api/test-email', requireAuth, async (req, res) => {
 
     // Send test email
     const mailOptions = {
-      from: user.smtpFromEmail || user.smtpUser,
+      from: `"Contact Outreach Manager" <${user.smtpFromEmail || user.smtpUser}>`,
       to: user.email,
       subject: 'Test Email - Contact Outreach Manager',
       html: `
