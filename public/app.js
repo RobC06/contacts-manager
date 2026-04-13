@@ -88,40 +88,50 @@ async function loadContacts() {
     // Restore saved state if it exists
     const savedState = localStorage.getItem('contactListState');
     if (savedState) {
+      // Clear state immediately so a parse error doesn't cause an infinite loop
+      localStorage.removeItem('contactListState');
       const state = JSON.parse(savedState);
 
-      // Restore search term
-      if (state.searchTerm) {
-        searchInput.value = state.searchTerm;
-      }
+      // Restore search term (always set, even if empty)
+      searchInput.value = state.searchTerm || '';
 
-      // Restore tag filters
-      if (state.selectedTags && state.selectedTags.length > 0) {
+      // Restore tag filters (handles all cases including empty array)
+      if (Array.isArray(state.selectedTags)) {
         document.querySelectorAll('.tag-filter').forEach(checkbox => {
           checkbox.checked = state.selectedTags.includes(checkbox.value);
         });
       }
 
-      // Restore sort
+      // Restore sort directly — without calling sortContacts() to avoid
+      // triggering extra full-table renders before the filter is applied
       if (state.sortField) {
-        // Reset currentSort to avoid toggle logic in sortContacts
-        currentSort.field = null;
-        currentSort.direction = 'asc';
+        currentSort.field = state.sortField;
+        currentSort.direction = state.sortDirection || 'asc';
 
-        // First call sets field and direction to 'asc'
-        sortContacts(state.sortField);
+        contacts.sort((a, b) => {
+          let aVal, bVal;
+          if (state.sortField === 'lastContact') {
+            aVal = getLastContactDate(a) || '0000-00-00';
+            bVal = getLastContactDate(b) || '0000-00-00';
+          } else if (state.sortField === 'followUpDate') {
+            aVal = a.followUpDate || '9999-99-99';
+            bVal = b.followUpDate || '9999-99-99';
+          } else {
+            aVal = (a[state.sortField] || '').toLowerCase();
+            bVal = (b[state.sortField] || '').toLowerCase();
+          }
+          if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+          if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
 
-        // If saved direction was 'desc', call again to toggle to 'desc'
-        if (state.sortDirection === 'desc') {
-          sortContacts(state.sortField);
-        }
+        document.querySelectorAll('th').forEach(th => th.classList.remove('sorted-asc', 'sorted-desc'));
+        const sortedTh = document.querySelector(`th[data-sort="${state.sortField}"]`);
+        if (sortedTh) sortedTh.classList.add(`sorted-${currentSort.direction}`);
       }
 
-      // Apply filters
+      // Apply filters and render exactly once
       filterContacts(searchInput.value);
-
-      // Clear the saved state
-      localStorage.removeItem('contactListState');
     } else {
       renderContacts();
     }
