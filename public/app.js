@@ -1,6 +1,8 @@
 // Global variables
 let contacts = [];
 let currentSort = { field: null, direction: 'asc' };
+let visibleContacts = [];   // tracks what's currently rendered (for export)
+let quickLogContactId = null;
 
 // Toast notification function
 function showToast(message, type = 'info') {
@@ -133,6 +135,7 @@ async function loadContacts() {
       // Apply filters and render exactly once
       filterContacts(searchInput.value);
     } else {
+      updateTagCounts();
       renderContacts();
     }
   } catch (error) {
@@ -144,6 +147,7 @@ async function loadContacts() {
 // Render contacts table
 function renderContacts(filteredContacts = null) {
   const contactsToRender = filteredContacts || contacts;
+  visibleContacts = contactsToRender; // track for CSV export
 
   if (contactsToRender.length === 0) {
     contactsTableBody.innerHTML = '';
@@ -155,9 +159,14 @@ function renderContacts(filteredContacts = null) {
   emptyState.style.display = 'none';
   document.querySelector('.table-container').style.display = 'block';
 
+  // Today's date in YYYY-MM-DD (local time) for overdue check
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
   contactsTableBody.innerHTML = contactsToRender.map(contact => {
     const lastContactDate = getLastContactDate(contact);
     const tagClass = contact.tag.replace(/\s+/g, '-');
+    const isOverdue = contact.tag === 'follow up' && contact.followUpDate && contact.followUpDate < today;
 
     const truncatedNotes = contact.followUpNotes
       ? (contact.followUpNotes.length > 50
@@ -187,7 +196,7 @@ function renderContacts(filteredContacts = null) {
     }
 
     return `
-      <tr data-id="${contact.id}">
+      <tr data-id="${contact.id}"${isOverdue ? ' class="overdue-row"' : ''}>
         <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
         <td><strong>${escapeHtml(contact.name)}</strong></td>
         <td>${escapeHtml(contact.company) || '-'}</td>
@@ -195,16 +204,17 @@ function renderContacts(filteredContacts = null) {
         <td>${lastContactDate || '-'}</td>
         <td title="${escapeHtml(contactNotes)}">${escapeHtml(contactNotes)}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
-        <td>${contact.followUpDate || '-'}</td>
+        <td class="${isOverdue ? 'overdue-date' : ''}">${contact.followUpDate || '-'}</td>
         <td title="${escapeHtml(contact.followUpNotes || '')}">${truncatedNotes}</td>
+        <td><button class="quick-log-btn" data-id="${contact.id}" data-name="${escapeHtml(contact.name)}" title="Log communication">+</button></td>
       </tr>
     `;
   }).join('');
 
-  // Add click listeners to rows (except checkboxes)
+  // Add click listeners to rows (except checkboxes and quick-log buttons)
   document.querySelectorAll('#contactsTableBody tr').forEach(row => {
     row.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('contact-checkbox')) {
+      if (!e.target.classList.contains('contact-checkbox') && !e.target.classList.contains('quick-log-btn')) {
         const contactId = row.dataset.id;
         viewContact(contactId);
       }
@@ -214,6 +224,14 @@ function renderContacts(filteredContacts = null) {
   // Add event listeners to checkboxes
   document.querySelectorAll('.contact-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', updateDeleteButtonVisibility);
+  });
+
+  // Add event listeners to quick-log buttons
+  document.querySelectorAll('.quick-log-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openQuickLog(btn.dataset.id, btn.dataset.name);
+    });
   });
 }
 
@@ -256,6 +274,7 @@ function filterContacts(searchTerm = '') {
     showToast('No contacts found', 'info');
   }
 
+  updateTagCounts();
   renderContacts(filtered);
 }
 
@@ -562,6 +581,18 @@ function setupEventListeners() {
   // Delete selected button
   document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedContacts);
 
+  // Bulk tag update button
+  document.getElementById('bulkTagBtn').addEventListener('click', bulkUpdateTag);
+
+  // Export contacts button
+  document.getElementById('exportContactsBtn').addEventListener('click', exportContacts);
+
+  // Quick log form submit and cancel
+  document.getElementById('quickLogForm').addEventListener('submit', submitQuickLog);
+  document.getElementById('cancelQuickLogBtn').addEventListener('click', () => {
+    document.getElementById('quickLogModal').style.display = 'none';
+  });
+
   // Contact form submit
   contactForm.addEventListener('submit', saveContact);
 
@@ -602,13 +633,15 @@ function setupEventListeners() {
 function updateDeleteButtonVisibility() {
   const selectedCheckboxes = document.querySelectorAll('.contact-checkbox:checked');
   const deleteBtn = document.getElementById('deleteSelectedBtn');
+  const bulkTagSelect = document.getElementById('bulkTagSelect');
+  const bulkTagBtn = document.getElementById('bulkTagBtn');
   const selectAllCheckbox = document.getElementById('selectAllCheckbox');
 
-  if (selectedCheckboxes.length > 0) {
-    deleteBtn.style.display = 'inline-block';
-  } else {
-    deleteBtn.style.display = 'none';
-  }
+  const hasSelection = selectedCheckboxes.length > 0;
+  deleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
+  bulkTagSelect.style.display = hasSelection ? 'inline-block' : 'none';
+  bulkTagBtn.style.display = hasSelection ? 'inline-block' : 'none';
+  if (!hasSelection) bulkTagSelect.value = '';
 
   // Update select all checkbox state
   const allCheckboxes = document.querySelectorAll('.contact-checkbox');
@@ -660,12 +693,152 @@ async function deleteSelectedContacts() {
     document.getElementById('selectAllCheckbox').checked = false;
     document.getElementById('selectAllCheckbox').indeterminate = false;
 
-    // Re-render the table
-    renderContacts();
+    filterContacts(searchInput.value);
     showToast(`${selectedIds.length} contact${selectedIds.length > 1 ? 's' : ''} deleted successfully`, 'success');
   } catch (error) {
     console.error('Failed to delete contacts:', error);
     showToast('Failed to delete some contacts', 'error');
+  }
+}
+
+// Update tag count badges on the filter checkboxes
+function updateTagCounts() {
+  const term = searchInput.value.toLowerCase();
+  const counts = { 'follow up': 0, 'waiting for response': 0, 'no action': 0 };
+
+  contacts.forEach(contact => {
+    const matchesSearch = !term || (
+      contact.name.toLowerCase().includes(term) ||
+      (contact.company && contact.company.toLowerCase().includes(term)) ||
+      (contact.title && contact.title.toLowerCase().includes(term)) ||
+      contact.tag.toLowerCase().includes(term)
+    );
+    if (matchesSearch && counts.hasOwnProperty(contact.tag)) {
+      counts[contact.tag]++;
+    }
+  });
+
+  const fuEl = document.getElementById('countFollowUp');
+  const wEl  = document.getElementById('countWaiting');
+  const naEl = document.getElementById('countNoAction');
+  if (fuEl) fuEl.textContent = counts['follow up'];
+  if (wEl)  wEl.textContent  = counts['waiting for response'];
+  if (naEl) naEl.textContent = counts['no action'];
+}
+
+// Export visible contacts to CSV
+function exportContacts() {
+  if (visibleContacts.length === 0) {
+    showToast('No contacts to export', 'info');
+    return;
+  }
+
+  const headers = ['Name', 'Company', 'Title', 'Email', 'Tag', 'Follow-up Date', 'Follow-up Notes', 'Date of Last Contact', 'Comments'];
+  const rows = visibleContacts.map(c => [
+    c.name || '',
+    c.company || '',
+    c.title || '',
+    c.email || '',
+    c.tag || '',
+    c.followUpDate || '',
+    c.followUpNotes || '',
+    getLastContactDate(c) || '',
+    c.comments || ''
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${visibleContacts.length} contact${visibleContacts.length !== 1 ? 's' : ''}`, 'success');
+}
+
+// Bulk-update tag for all selected contacts
+async function bulkUpdateTag() {
+  const select = document.getElementById('bulkTagSelect');
+  const newTag = select.value;
+  if (!newTag) {
+    showToast('Select a tag to apply', 'info');
+    return;
+  }
+
+  const selectedIds = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.dataset.id);
+  if (selectedIds.length === 0) return;
+
+  try {
+    await Promise.all(selectedIds.map(id => {
+      const contact = contacts.find(c => c.id === id);
+      if (!contact) return Promise.resolve();
+      return fetch(`/api/contacts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...contact, tag: newTag })
+      });
+    }));
+
+    selectedIds.forEach(id => {
+      const contact = contacts.find(c => c.id === id);
+      if (contact) contact.tag = newTag;
+    });
+
+    select.value = '';
+    document.getElementById('selectAllCheckbox').checked = false;
+    document.getElementById('selectAllCheckbox').indeterminate = false;
+    filterContacts(searchInput.value);
+    showToast(`Updated tag for ${selectedIds.length} contact${selectedIds.length !== 1 ? 's' : ''}`, 'success');
+  } catch (error) {
+    console.error('Failed to bulk update tags:', error);
+    showToast('Failed to update some tags', 'error');
+  }
+}
+
+// Open the quick-log modal for a contact
+function openQuickLog(contactId, contactName) {
+  quickLogContactId = contactId;
+  document.getElementById('quickLogContactName').textContent = contactName;
+  document.getElementById('quickLogForm').reset();
+  const d = new Date();
+  document.getElementById('quickLogDate').value =
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  document.getElementById('quickLogModal').style.display = 'block';
+}
+
+// Submit quick-log communication
+async function submitQuickLog(event) {
+  event.preventDefault();
+  const commData = {
+    type: document.getElementById('quickLogType').value,
+    date: document.getElementById('quickLogDate').value,
+    description: document.getElementById('quickLogDesc').value
+  };
+
+  try {
+    const response = await fetch(`/api/contacts/${quickLogContactId}/communications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(commData)
+    });
+
+    if (response.ok) {
+      const newComm = await response.json();
+      const contact = contacts.find(c => c.id === quickLogContactId);
+      if (contact) {
+        contact.communications = contact.communications || [];
+        contact.communications.push(newComm);
+      }
+      document.getElementById('quickLogModal').style.display = 'none';
+      filterContacts(searchInput.value);
+      showToast('Communication logged successfully', 'success');
+    } else {
+      showToast('Failed to log communication', 'error');
+    }
+  } catch (error) {
+    console.error('Failed to log communication:', error);
+    showToast('Failed to log communication', 'error');
   }
 }
 

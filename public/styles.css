@@ -1497,3 +1497,107 @@ body.dark-mode .toast-message {
     padding: 12px 8px;
   }
 }
+
+/* ── New features ─────────────────────────────────────────── */
+
+/* Tag count badges */
+.tag-count {
+  display: inline-block;
+  background: #e8eaed;
+  color: #5f6368;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Overdue follow-up rows */
+tbody tr.overdue-row td.overdue-date {
+  color: #d93025;
+  font-weight: 700;
+}
+
+tbody tr.overdue-row {
+  border-left: 3px solid #d93025;
+}
+
+/* Quick-log "+" button */
+.log-col {
+  width: 42px;
+  text-align: center;
+}
+
+td:has(.quick-log-btn) {
+  text-align: center;
+  padding: 8px;
+}
+
+.quick-log-btn {
+  background: none;
+  border: 1.5px solid #1a73e8;
+  color: #1a73e8;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.quick-log-btn:hover {
+  background: #1a73e8;
+  color: white;
+  transform: scale(1.15);
+}
+
+/* Bulk tag select */
+.bulk-tag-select {
+  padding: 7px 10px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  height: 36px;
+}
+
+/* ── Dark mode overrides for new features ─────────────────── */
+
+body.dark-mode .tag-count {
+  background: #3a3f4a;
+  color: #9aa0a6;
+}
+
+body.dark-mode tbody tr.overdue-row td.overdue-date {
+  color: #ef5350;
+}
+
+body.dark-mode tbody tr.overdue-row {
+  border-left: 3px solid #ef5350;
+}
+
+body.dark-mode .quick-log-btn {
+  border-color: #5fa3e8;
+  color: #5fa3e8;
+}
+
+body.dark-mode .quick-log-btn:hover {
+  background: #5fa3e8;
+  color: #1f2227;
+}
+
+body.dark-mode .bulk-tag-select {
+  background: #3a3f4a;
+  border-color: #4a4f5a;
+  color: #e8eaed;
+}

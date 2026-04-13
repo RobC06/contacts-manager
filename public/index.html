@@ -13,6 +13,7 @@
       <div class="header-actions">
         <button id="addContactBtn" class="btn btn-primary">Add New Contact</button>
         <button id="importContactsBtn" class="btn btn-primary">Import Contacts</button>
+        <button id="exportContactsBtn" class="btn btn-secondary">Export CSV</button>
         <button id="settingsBtn" class="btn btn-secondary">Settings</button>
         <button id="logoutBtn" class="btn btn-secondary">Logout</button>
       </div>
@@ -23,12 +24,19 @@
       <div class="filter-group">
         <label for="tagFilter">Filter by Follow-up?:</label>
         <div class="filter-checkboxes" id="tagFilterContainer">
-          <label><input type="checkbox" class="tag-filter" value="follow up" checked> Follow Up</label>
-          <label><input type="checkbox" class="tag-filter" value="waiting for response" checked> Waiting for Response</label>
-          <label><input type="checkbox" class="tag-filter" value="no action" checked> No Action</label>
+          <label><input type="checkbox" class="tag-filter" value="follow up" checked> Follow Up <span class="tag-count" id="countFollowUp">0</span></label>
+          <label><input type="checkbox" class="tag-filter" value="waiting for response" checked> Waiting for Response <span class="tag-count" id="countWaiting">0</span></label>
+          <label><input type="checkbox" class="tag-filter" value="no action" checked> No Action <span class="tag-count" id="countNoAction">0</span></label>
         </div>
       </div>
       <button id="deleteSelectedBtn" class="btn btn-danger" style="display: none;">Delete Selected</button>
+      <select id="bulkTagSelect" class="bulk-tag-select" style="display: none;">
+        <option value="">Change tag to...</option>
+        <option value="follow up">Follow Up</option>
+        <option value="waiting for response">Waiting for Response</option>
+        <option value="no action">No Action</option>
+      </select>
+      <button id="bulkTagBtn" class="btn btn-secondary btn-sm" style="display: none;">Update Tag</button>
     </div>
 
     <div class="table-container">
@@ -44,6 +52,7 @@
             <th data-sort="tag">Follow-up? <span class="sort-arrow">↕</span></th>
             <th data-sort="followUpDate">Follow-up Date <span class="sort-arrow">↕</span></th>
             <th>Follow-Up Notes</th>
+            <th class="log-col"></th>
           </tr>
         </thead>
         <tbody id="contactsTableBody">
@@ -176,6 +185,39 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Quick Log Communication Modal -->
+  <div id="quickLogModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Log Communication &mdash; <span id="quickLogContactName"></span></h2>
+        <span class="close">&times;</span>
+      </div>
+      <form id="quickLogForm">
+        <div class="form-group">
+          <label for="quickLogType">Type *</label>
+          <select id="quickLogType" required>
+            <option value="email">Email</option>
+            <option value="phone">Phone Call</option>
+            <option value="meeting">Meeting</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="quickLogDate">Date *</label>
+          <input type="date" id="quickLogDate" required>
+        </div>
+        <div class="form-group">
+          <label for="quickLogDesc">Description *</label>
+          <textarea id="quickLogDesc" rows="3" required placeholder="Brief description of the communication..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelQuickLogBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Log Communication</button>
         </div>
       </form>
     </div>
