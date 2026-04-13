@@ -198,6 +198,7 @@ function renderContacts(filteredContacts = null) {
     return `
       <tr data-id="${contact.id}"${isOverdue ? ' class="overdue-row"' : ''}>
         <td><input type="checkbox" class="contact-checkbox" data-id="${contact.id}"></td>
+        <td><button class="quick-log-btn" data-id="${contact.id}" data-name="${escapeHtml(contact.name)}" title="Log communication">+</button></td>
         <td><strong>${escapeHtml(contact.name)}</strong></td>
         <td>${escapeHtml(contact.company) || '-'}</td>
         <td>${escapeHtml(contact.title) || '-'}</td>
@@ -206,7 +207,6 @@ function renderContacts(filteredContacts = null) {
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
         <td class="${isOverdue ? 'overdue-date' : ''}">${contact.followUpDate || '-'}</td>
         <td title="${escapeHtml(contact.followUpNotes || '')}">${truncatedNotes}</td>
-        <td><button class="quick-log-btn" data-id="${contact.id}" data-name="${escapeHtml(contact.name)}" title="Log communication">+</button></td>
       </tr>
     `;
   }).join('');
