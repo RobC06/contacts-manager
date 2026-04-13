@@ -299,7 +299,7 @@ function sortContacts(field) {
     sortedTh.classList.add(`sorted-${currentSort.direction}`);
   }
 
-  renderContacts();
+  filterContacts(searchInput.value);
 }
 
 // View contact details
