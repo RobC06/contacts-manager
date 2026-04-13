@@ -215,6 +215,29 @@
           <label for="quickLogDesc">Description *</label>
           <textarea id="quickLogDesc" rows="3" required placeholder="Brief description of the communication..."></textarea>
         </div>
+        <hr style="margin: 16px 0; border: none; border-top: 1px solid #e1e8ed;">
+        <p class="quick-log-section-label">Update Follow-up Info (optional)</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quickLogTag">Tag</label>
+            <select id="quickLogTag">
+              <option value="no action">No Action</option>
+              <option value="follow up">Follow Up</option>
+              <option value="waiting for response">Waiting for Response</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quickLogFollowUpDate">Follow-up Date</label>
+            <input type="date" id="quickLogFollowUpDate">
+            <label style="margin-top: 8px; font-size: 13px; font-weight: normal;">
+              <input type="checkbox" id="quickLogDontSendEmail"> Don't send email
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="quickLogFollowUpNotes">Follow-up Notes</label>
+          <textarea id="quickLogFollowUpNotes" rows="2" placeholder="Notes for the follow-up..."></textarea>
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelQuickLogBtn">Cancel</button>
           <button type="submit" class="btn btn-primary">Log Communication</button>

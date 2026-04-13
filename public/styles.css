@@ -1601,3 +1601,14 @@ body.dark-mode .bulk-tag-select {
   border-color: #4a4f5a;
   color: #e8eaed;
 }
+
+.quick-log-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5f6368;
+  margin-bottom: 12px;
+}
+
+body.dark-mode .quick-log-section-label {
+  color: #9aa0a6;
+}

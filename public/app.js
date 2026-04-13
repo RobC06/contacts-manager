@@ -801,34 +801,74 @@ function openQuickLog(contactId, contactName) {
   quickLogContactId = contactId;
   document.getElementById('quickLogContactName').textContent = contactName;
   document.getElementById('quickLogForm').reset();
+
+  // Default comm date to today
   const d = new Date();
   document.getElementById('quickLogDate').value =
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  // Pre-populate follow-up fields from existing contact data
+  const contact = contacts.find(c => c.id === contactId);
+  if (contact) {
+    document.getElementById('quickLogTag').value = contact.tag || 'no action';
+    document.getElementById('quickLogFollowUpDate').value = contact.followUpDate || '';
+    document.getElementById('quickLogDontSendEmail').checked = contact.dontSendEmail || false;
+    document.getElementById('quickLogFollowUpNotes').value = contact.followUpNotes || '';
+  }
+
   document.getElementById('quickLogModal').style.display = 'block';
 }
 
 // Submit quick-log communication
 async function submitQuickLog(event) {
   event.preventDefault();
+
   const commData = {
     type: document.getElementById('quickLogType').value,
     date: document.getElementById('quickLogDate').value,
     description: document.getElementById('quickLogDesc').value
   };
 
-  try {
-    const response = await fetch(`/api/contacts/${quickLogContactId}/communications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(commData)
-    });
+  const contact = contacts.find(c => c.id === quickLogContactId);
+  const updatedContact = contact ? {
+    ...contact,
+    tag: document.getElementById('quickLogTag').value,
+    followUpDate: document.getElementById('quickLogFollowUpDate').value || null,
+    followUpNotes: document.getElementById('quickLogFollowUpNotes').value,
+    dontSendEmail: document.getElementById('quickLogDontSendEmail').checked
+  } : null;
 
-    if (response.ok) {
-      const newComm = await response.json();
-      const contact = contacts.find(c => c.id === quickLogContactId);
+  try {
+    // Run communication POST and contact PUT in parallel
+    const requests = [
+      fetch(`/api/contacts/${quickLogContactId}/communications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commData)
+      })
+    ];
+    if (updatedContact) {
+      requests.push(fetch(`/api/contacts/${quickLogContactId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedContact)
+      }));
+    }
+
+    const [commResponse] = await Promise.all(requests);
+
+    if (commResponse.ok) {
+      const newComm = await commResponse.json();
       if (contact) {
         contact.communications = contact.communications || [];
         contact.communications.push(newComm);
+        // Apply updated contact fields locally
+        if (updatedContact) {
+          contact.tag          = updatedContact.tag;
+          contact.followUpDate = updatedContact.followUpDate;
+          contact.followUpNotes = updatedContact.followUpNotes;
+          contact.dontSendEmail = updatedContact.dontSendEmail;
+        }
       }
       document.getElementById('quickLogModal').style.display = 'none';
       filterContacts(searchInput.value);
