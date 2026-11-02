@@ -116,6 +116,7 @@ function populateContactForm() {
   document.getElementById('contactTag').value = contact.tag;
   document.getElementById('contactRelationship').value = contact.relationship || 'unassessed';
   document.getElementById('contactLikelihood').value = contact.likelihood || 'unrated';
+  document.getElementById('contactRelationshipComments').value = contact.relationshipComments || '';
   document.getElementById('contactFollowUpDate').value = contact.followUpDate || '';
   document.getElementById('contactFollowUpNotes').value = contact.followUpNotes || '';
   document.getElementById('dontSendEmail').checked = contact.dontSendEmail || false;
@@ -218,6 +219,7 @@ async function saveContact(event) {
     tag: document.getElementById('contactTag').value,
     relationship: document.getElementById('contactRelationship').value,
     likelihood: document.getElementById('contactLikelihood').value,
+    relationshipComments: document.getElementById('contactRelationshipComments').value,
     followUpDate: document.getElementById('contactFollowUpDate').value || null,
     followUpNotes: document.getElementById('contactFollowUpNotes').value,
     dontSendEmail: document.getElementById('dontSendEmail').checked

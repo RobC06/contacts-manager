@@ -58,6 +58,10 @@ const contactSchema = new mongoose.Schema({
     enum: ['high', 'medium', 'low', 'unrated'],
     default: 'unrated'
   },
+  relationshipComments: {
+    type: String,
+    default: ''
+  },
   followUpDate: {
     type: String,
     default: null

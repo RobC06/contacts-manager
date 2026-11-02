@@ -255,6 +255,7 @@ function toClientContact(contact) {
     tag: contact.tag,
     relationship: contact.relationship,
     likelihood: contact.likelihood,
+    relationshipComments: contact.relationshipComments,
     followUpDate: contact.followUpDate,
     followUpRequired: contact.followUpRequired,
     followUpNotes: contact.followUpNotes,
@@ -307,6 +308,7 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
       tag: req.body.tag || 'no action',
       relationship: req.body.relationship || 'unassessed',
       likelihood: req.body.likelihood || 'unrated',
+      relationshipComments: req.body.relationshipComments || '',
       followUpDate: req.body.followUpDate || null,
       followUpRequired: req.body.followUpRequired || false,
       followUpNotes: req.body.followUpNotes || '',
@@ -342,6 +344,7 @@ app.put('/api/contacts/:id', requireAuth, async (req, res) => {
     if (req.body.tag !== undefined) contact.tag = req.body.tag;
     if (req.body.relationship !== undefined) contact.relationship = req.body.relationship;
     if (req.body.likelihood !== undefined) contact.likelihood = req.body.likelihood;
+    if (req.body.relationshipComments !== undefined) contact.relationshipComments = req.body.relationshipComments;
     if (req.body.followUpDate !== undefined) contact.followUpDate = req.body.followUpDate;
     if (req.body.followUpRequired !== undefined) contact.followUpRequired = req.body.followUpRequired;
     if (req.body.followUpNotes !== undefined) contact.followUpNotes = req.body.followUpNotes;

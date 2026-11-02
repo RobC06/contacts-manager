@@ -207,6 +207,11 @@ function renderContacts(filteredContacts = null) {
     const tagClass = contact.tag.replace(/\s+/g, '-');
     const isOverdue = contact.tag === 'follow up' && contact.followUpDate && contact.followUpDate < today;
 
+    const relComments = contact.relationshipComments || '';
+    const truncatedRelComments = relComments
+      ? (relComments.length > 50 ? escapeHtml(relComments.substring(0, 50)) + '...' : escapeHtml(relComments))
+      : '-';
+
     const truncatedNotes = contact.followUpNotes
       ? (contact.followUpNotes.length > 50
           ? escapeHtml(contact.followUpNotes.substring(0, 50)) + '...'
@@ -243,6 +248,7 @@ function renderContacts(filteredContacts = null) {
         <td>${escapeHtml(contact.title) || '-'}</td>
         <td><span class="category-badge relationship-${getRelationship(contact).replace(/\s+/g, '-')}">${RELATIONSHIP_LABELS[getRelationship(contact)] || escapeHtml(getRelationship(contact))}</span></td>
         <td><span class="category-badge likelihood-${getLikelihood(contact)}">${LIKELIHOOD_LABELS[getLikelihood(contact)] || escapeHtml(getLikelihood(contact))}</span></td>
+        <td title="${escapeHtml(relComments)}">${truncatedRelComments}</td>
         <td>${lastContactDate || '-'}</td>
         <td title="${escapeHtml(contactNotes)}">${escapeHtml(contactNotes)}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
@@ -423,6 +429,7 @@ async function saveContact(event) {
     tag: document.getElementById('contactTag').value,
     relationship: document.getElementById('contactRelationship').value,
     likelihood: document.getElementById('contactLikelihood').value,
+    relationshipComments: document.getElementById('contactRelationshipComments').value,
     followUpDate: document.getElementById('contactFollowUpDate').value || null,
     followUpRequired: document.getElementById('contactFollowUpRequired').checked,
     followUpNotes: document.getElementById('contactFollowUpNotes').value,
@@ -790,7 +797,7 @@ function exportContacts() {
     return;
   }
 
-  const headers = ['Name', 'Company', 'Title', 'Email', 'Relationship', 'Likelihood', 'Tag', 'Follow-up Date', 'Follow-up Notes', 'Date of Last Contact', 'Comments'];
+  const headers = ['Name', 'Company', 'Title', 'Email', 'Relationship', 'Likelihood', 'Relationship Comments', 'Tag', 'Follow-up Date', 'Follow-up Notes', 'Date of Last Contact', 'Comments'];
   const rows = visibleContacts.map(c => [
     c.name || '',
     c.company || '',
@@ -798,6 +805,7 @@ function exportContacts() {
     c.email || '',
     RELATIONSHIP_LABELS[getRelationship(c)] || getRelationship(c),
     LIKELIHOOD_LABELS[getLikelihood(c)] || getLikelihood(c),
+    c.relationshipComments || '',
     c.tag || '',
     c.followUpDate || '',
     c.followUpNotes || '',
