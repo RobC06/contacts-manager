@@ -29,6 +29,24 @@
           <label><input type="checkbox" class="tag-filter" value="no action" checked> No Action <span class="tag-count" id="countNoAction">0</span></label>
         </div>
       </div>
+      <div class="filter-group">
+        <label>Relationship:</label>
+        <div class="filter-checkboxes">
+          <label><input type="checkbox" class="relationship-filter" value="referral source" checked> Referral Source <span class="tag-count" data-count-relationship="referral source">0</span></label>
+          <label><input type="checkbox" class="relationship-filter" value="connector" checked> Connector <span class="tag-count" data-count-relationship="connector">0</span></label>
+          <label><input type="checkbox" class="relationship-filter" value="both" checked> Both <span class="tag-count" data-count-relationship="both">0</span></label>
+          <label><input type="checkbox" class="relationship-filter" value="unassessed" checked> Not Yet Assessed <span class="tag-count" data-count-relationship="unassessed">0</span></label>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Likelihood:</label>
+        <div class="filter-checkboxes">
+          <label><input type="checkbox" class="likelihood-filter" value="high" checked> High <span class="tag-count" data-count-likelihood="high">0</span></label>
+          <label><input type="checkbox" class="likelihood-filter" value="medium" checked> Medium <span class="tag-count" data-count-likelihood="medium">0</span></label>
+          <label><input type="checkbox" class="likelihood-filter" value="low" checked> Low <span class="tag-count" data-count-likelihood="low">0</span></label>
+          <label><input type="checkbox" class="likelihood-filter" value="unrated" checked> Not Yet Rated <span class="tag-count" data-count-likelihood="unrated">0</span></label>
+        </div>
+      </div>
       <button id="deleteSelectedBtn" class="btn btn-danger" style="display: none;">Delete Selected</button>
       <select id="bulkTagSelect" class="bulk-tag-select" style="display: none;">
         <option value="">Change tag to...</option>
@@ -36,7 +54,21 @@
         <option value="waiting for response">Waiting for Response</option>
         <option value="no action">No Action</option>
       </select>
-      <button id="bulkTagBtn" class="btn btn-secondary btn-sm" style="display: none;">Update Tag</button>
+      <select id="bulkRelationshipSelect" class="bulk-tag-select" style="display: none;">
+        <option value="">Change relationship to...</option>
+        <option value="referral source">Referral Source</option>
+        <option value="connector">Connector</option>
+        <option value="both">Both</option>
+        <option value="unassessed">Not Yet Assessed</option>
+      </select>
+      <select id="bulkLikelihoodSelect" class="bulk-tag-select" style="display: none;">
+        <option value="">Change likelihood to...</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+        <option value="unrated">Not Yet Rated</option>
+      </select>
+      <button id="bulkTagBtn" class="btn btn-secondary btn-sm" style="display: none;">Update Selected</button>
     </div>
 
     <div class="table-container">
@@ -48,6 +80,8 @@
             <th data-sort="name">Name <span class="sort-arrow">↕</span></th>
             <th data-sort="company">Company <span class="sort-arrow">↕</span></th>
             <th data-sort="title">Title <span class="sort-arrow">↕</span></th>
+            <th data-sort="relationship">Relationship <span class="sort-arrow">↕</span></th>
+            <th data-sort="likelihood">Likelihood <span class="sort-arrow">↕</span></th>
             <th data-sort="lastContact">Date of Last Contact <span class="sort-arrow">↕</span></th>
             <th>Contact Notes</th>
             <th data-sort="tag">Follow-up? <span class="sort-arrow">↕</span></th>
@@ -96,6 +130,24 @@
             <option value="no action">No Action</option>
             <option value="follow up">Follow Up</option>
             <option value="waiting for response">Waiting for Response</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="contactRelationship">Relationship</label>
+          <select id="contactRelationship">
+            <option value="unassessed">Not Yet Assessed</option>
+            <option value="referral source">Referral Source</option>
+            <option value="connector">Connector</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="contactLikelihood">Likelihood</label>
+          <select id="contactLikelihood">
+            <option value="unrated">Not Yet Rated</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
           </select>
         </div>
         <div class="form-group">

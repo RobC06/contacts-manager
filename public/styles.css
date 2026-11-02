@@ -319,6 +319,58 @@ td {
   color: #1e8e3e;
 }
 
+/* Relationship / likelihood badges */
+.category-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.category-badge.relationship-both {
+  background-color: #f3e8fd;
+  color: #8430ce;
+}
+
+.category-badge.relationship-referral-source {
+  background-color: #e8f5e9;
+  color: #1e8e3e;
+}
+
+.category-badge.relationship-connector {
+  background-color: #e8f0fe;
+  color: #1967d2;
+}
+
+.category-badge.likelihood-high {
+  background-color: #e8f5e9;
+  color: #1e8e3e;
+}
+
+.category-badge.likelihood-medium {
+  background-color: #fef7e0;
+  color: #b06000;
+}
+
+.category-badge.likelihood-low {
+  background-color: #fce8e6;
+  color: #c5221f;
+}
+
+.category-badge.relationship-unassessed,
+.category-badge.likelihood-unrated {
+  background-color: #f1f3f4;
+  color: #80868b;
+}
+
+body.dark-mode .category-badge.relationship-unassessed,
+body.dark-mode .category-badge.likelihood-unrated {
+  background-color: #3a3f4a;
+  color: #9aa0a6;
+}
+
 /* Action buttons */
 .action-btn {
   padding: 6px 12px;

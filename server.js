@@ -243,6 +243,27 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
   }
 });
 
+// Shape a Contact document for the frontend (MongoDB _id -> id)
+function toClientContact(contact) {
+  return {
+    id: contact._id.toString(),
+    name: contact.name,
+    company: contact.company,
+    title: contact.title,
+    email: contact.email,
+    comments: contact.comments,
+    tag: contact.tag,
+    relationship: contact.relationship,
+    likelihood: contact.likelihood,
+    followUpDate: contact.followUpDate,
+    followUpRequired: contact.followUpRequired,
+    followUpNotes: contact.followUpNotes,
+    dontSendEmail: contact.dontSendEmail,
+    communications: contact.communications,
+    createdAt: contact.createdAt
+  };
+}
+
 // API Routes (Protected)
 
 // Get all contacts
@@ -250,20 +271,7 @@ app.get('/api/contacts', requireAuth, async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ createdAt: -1 });
     // Transform MongoDB _id to id for frontend compatibility
-    const transformedContacts = contacts.map(contact => ({
-      id: contact._id.toString(),
-      name: contact.name,
-      company: contact.company,
-      title: contact.title,
-      email: contact.email,
-      comments: contact.comments,
-      tag: contact.tag,
-      followUpDate: contact.followUpDate,
-      followUpRequired: contact.followUpRequired,
-      followUpNotes: contact.followUpNotes,
-      communications: contact.communications,
-      createdAt: contact.createdAt
-    }));
+    const transformedContacts = contacts.map(toClientContact);
     res.json(transformedContacts);
   } catch (error) {
     console.error('Error fetching contacts:', error);
@@ -279,20 +287,7 @@ app.get('/api/contacts/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Contact not found' });
     }
     // Transform for frontend
-    const transformedContact = {
-      id: contact._id.toString(),
-      name: contact.name,
-      company: contact.company,
-      title: contact.title,
-      email: contact.email,
-      comments: contact.comments,
-      tag: contact.tag,
-      followUpDate: contact.followUpDate,
-      followUpRequired: contact.followUpRequired,
-      followUpNotes: contact.followUpNotes,
-      communications: contact.communications,
-      createdAt: contact.createdAt
-    };
+    const transformedContact = toClientContact(contact);
     res.json(transformedContact);
   } catch (error) {
     console.error('Error fetching contact:', error);
@@ -310,6 +305,8 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
       email: req.body.email || '',
       comments: req.body.comments || '',
       tag: req.body.tag || 'no action',
+      relationship: req.body.relationship || 'unassessed',
+      likelihood: req.body.likelihood || 'unrated',
       followUpDate: req.body.followUpDate || null,
       followUpRequired: req.body.followUpRequired || false,
       followUpNotes: req.body.followUpNotes || '',
@@ -319,20 +316,7 @@ app.post('/api/contacts', requireAuth, async (req, res) => {
     await contact.save();
 
     // Transform for frontend
-    const transformedContact = {
-      id: contact._id.toString(),
-      name: contact.name,
-      company: contact.company,
-      title: contact.title,
-      email: contact.email,
-      comments: contact.comments,
-      tag: contact.tag,
-      followUpDate: contact.followUpDate,
-      followUpRequired: contact.followUpRequired,
-      followUpNotes: contact.followUpNotes,
-      communications: contact.communications,
-      createdAt: contact.createdAt
-    };
+    const transformedContact = toClientContact(contact);
 
     res.status(201).json(transformedContact);
   } catch (error) {
@@ -356,6 +340,8 @@ app.put('/api/contacts/:id', requireAuth, async (req, res) => {
     if (req.body.email !== undefined) contact.email = req.body.email;
     if (req.body.comments !== undefined) contact.comments = req.body.comments;
     if (req.body.tag !== undefined) contact.tag = req.body.tag;
+    if (req.body.relationship !== undefined) contact.relationship = req.body.relationship;
+    if (req.body.likelihood !== undefined) contact.likelihood = req.body.likelihood;
     if (req.body.followUpDate !== undefined) contact.followUpDate = req.body.followUpDate;
     if (req.body.followUpRequired !== undefined) contact.followUpRequired = req.body.followUpRequired;
     if (req.body.followUpNotes !== undefined) contact.followUpNotes = req.body.followUpNotes;
@@ -371,20 +357,7 @@ app.put('/api/contacts/:id', requireAuth, async (req, res) => {
     await contact.save();
 
     // Transform for frontend
-    const transformedContact = {
-      id: contact._id.toString(),
-      name: contact.name,
-      company: contact.company,
-      title: contact.title,
-      email: contact.email,
-      comments: contact.comments,
-      tag: contact.tag,
-      followUpDate: contact.followUpDate,
-      followUpRequired: contact.followUpRequired,
-      followUpNotes: contact.followUpNotes,
-      communications: contact.communications,
-      createdAt: contact.createdAt
-    };
+    const transformedContact = toClientContact(contact);
 
     res.json(transformedContact);
   } catch (error) {

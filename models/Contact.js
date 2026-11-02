@@ -47,6 +47,17 @@ const contactSchema = new mongoose.Schema({
     enum: ['follow up', 'waiting for response', 'no action'],
     default: 'no action'
   },
+  // Business-development categorization
+  relationship: {
+    type: String,
+    enum: ['referral source', 'connector', 'both', 'unassessed'],
+    default: 'unassessed'
+  },
+  likelihood: {
+    type: String,
+    enum: ['high', 'medium', 'low', 'unrated'],
+    default: 'unrated'
+  },
   followUpDate: {
     type: String,
     default: null
@@ -75,6 +86,8 @@ const contactSchema = new mongoose.Schema({
 // Index for faster searches
 contactSchema.index({ name: 'text', company: 'text', title: 'text' });
 contactSchema.index({ tag: 1 });
+contactSchema.index({ relationship: 1 });
+contactSchema.index({ likelihood: 1 });
 contactSchema.index({ followUpDate: 1 });
 
 module.exports = mongoose.model('Contact', contactSchema);

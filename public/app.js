@@ -4,6 +4,44 @@ let currentSort = { field: null, direction: 'asc' };
 let visibleContacts = [];   // tracks what's currently rendered (for export)
 let quickLogContactId = null;
 
+// Business-development categories: display labels and sort order (best first)
+const RELATIONSHIP_LABELS = {
+  'referral source': 'Referral Source',
+  'connector': 'Connector',
+  'both': 'Both',
+  'unassessed': 'Not Yet Assessed'
+};
+const RELATIONSHIP_RANK = { 'both': 0, 'referral source': 1, 'connector': 2, 'unassessed': 3 };
+const LIKELIHOOD_LABELS = {
+  'high': 'High',
+  'medium': 'Medium',
+  'low': 'Low',
+  'unrated': 'Not Yet Rated'
+};
+const LIKELIHOOD_RANK = { 'high': 0, 'medium': 1, 'low': 2, 'unrated': 3 };
+
+function getRelationship(contact) {
+  return contact.relationship || 'unassessed';
+}
+
+function getLikelihood(contact) {
+  return contact.likelihood || 'unrated';
+}
+
+// Values of the checked boxes for a filter group (class name)
+function getCheckedValues(className) {
+  return Array.from(document.querySelectorAll(`.${className}:checked`)).map(cb => cb.value);
+}
+
+// Value used when sorting by a column
+function getSortValue(contact, field) {
+  if (field === 'lastContact') return getLastContactDate(contact) || '0000-00-00';
+  if (field === 'followUpDate') return contact.followUpDate || '9999-99-99';
+  if (field === 'relationship') return RELATIONSHIP_RANK[getRelationship(contact)] ?? 99;
+  if (field === 'likelihood') return LIKELIHOOD_RANK[getLikelihood(contact)] ?? 99;
+  return (contact[field] || '').toLowerCase();
+}
+
 // Toast notification function
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
@@ -103,6 +141,16 @@ async function loadContacts() {
           checkbox.checked = state.selectedTags.includes(checkbox.value);
         });
       }
+      if (Array.isArray(state.selectedRelationships)) {
+        document.querySelectorAll('.relationship-filter').forEach(checkbox => {
+          checkbox.checked = state.selectedRelationships.includes(checkbox.value);
+        });
+      }
+      if (Array.isArray(state.selectedLikelihoods)) {
+        document.querySelectorAll('.likelihood-filter').forEach(checkbox => {
+          checkbox.checked = state.selectedLikelihoods.includes(checkbox.value);
+        });
+      }
 
       // Restore sort directly — without calling sortContacts() to avoid
       // triggering extra full-table renders before the filter is applied
@@ -111,17 +159,8 @@ async function loadContacts() {
         currentSort.direction = state.sortDirection || 'asc';
 
         contacts.sort((a, b) => {
-          let aVal, bVal;
-          if (state.sortField === 'lastContact') {
-            aVal = getLastContactDate(a) || '0000-00-00';
-            bVal = getLastContactDate(b) || '0000-00-00';
-          } else if (state.sortField === 'followUpDate') {
-            aVal = a.followUpDate || '9999-99-99';
-            bVal = b.followUpDate || '9999-99-99';
-          } else {
-            aVal = (a[state.sortField] || '').toLowerCase();
-            bVal = (b[state.sortField] || '').toLowerCase();
-          }
+          const aVal = getSortValue(a, state.sortField);
+          const bVal = getSortValue(b, state.sortField);
           if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
           if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
           return 0;
@@ -202,6 +241,8 @@ function renderContacts(filteredContacts = null) {
         <td><strong>${escapeHtml(contact.name)}</strong></td>
         <td>${escapeHtml(contact.company) || '-'}</td>
         <td>${escapeHtml(contact.title) || '-'}</td>
+        <td><span class="category-badge relationship-${getRelationship(contact).replace(/\s+/g, '-')}">${RELATIONSHIP_LABELS[getRelationship(contact)] || escapeHtml(getRelationship(contact))}</span></td>
+        <td><span class="category-badge likelihood-${getLikelihood(contact)}">${LIKELIHOOD_LABELS[getLikelihood(contact)] || escapeHtml(getLikelihood(contact))}</span></td>
         <td>${lastContactDate || '-'}</td>
         <td title="${escapeHtml(contactNotes)}">${escapeHtml(contactNotes)}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
@@ -253,6 +294,8 @@ function filterContacts(searchTerm = '') {
   // Get selected tag filters
   const selectedTags = Array.from(document.querySelectorAll('.tag-filter:checked'))
     .map(checkbox => checkbox.value);
+  const selectedRelationships = getCheckedValues('relationship-filter');
+  const selectedLikelihoods = getCheckedValues('likelihood-filter');
 
   const filtered = contacts.filter(contact => {
     // Check search term match
@@ -266,7 +309,11 @@ function filterContacts(searchTerm = '') {
     // Check tag filter match
     const matchesTagFilter = selectedTags.length === 0 || selectedTags.includes(contact.tag);
 
-    return matchesSearch && matchesTagFilter;
+    // Check relationship and likelihood filter matches (none checked = no filtering)
+    const matchesRelationship = selectedRelationships.length === 0 || selectedRelationships.includes(getRelationship(contact));
+    const matchesLikelihood = selectedLikelihoods.length === 0 || selectedLikelihoods.includes(getLikelihood(contact));
+
+    return matchesSearch && matchesTagFilter && matchesRelationship && matchesLikelihood;
   });
 
   // Show toast if search term provided but no results
@@ -290,18 +337,8 @@ function sortContacts(field) {
 
   // Sort the contacts array
   contacts.sort((a, b) => {
-    let aVal, bVal;
-
-    if (field === 'lastContact') {
-      aVal = getLastContactDate(a) || '0000-00-00';
-      bVal = getLastContactDate(b) || '0000-00-00';
-    } else if (field === 'followUpDate') {
-      aVal = a.followUpDate || '9999-99-99';
-      bVal = b.followUpDate || '9999-99-99';
-    } else {
-      aVal = (a[field] || '').toLowerCase();
-      bVal = (b[field] || '').toLowerCase();
-    }
+    const aVal = getSortValue(a, field);
+    const bVal = getSortValue(b, field);
 
     if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
     if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
@@ -327,6 +364,8 @@ function viewContact(contactId) {
   const state = {
     searchTerm: searchInput.value,
     selectedTags: Array.from(document.querySelectorAll('.tag-filter:checked')).map(cb => cb.value),
+    selectedRelationships: getCheckedValues('relationship-filter'),
+    selectedLikelihoods: getCheckedValues('likelihood-filter'),
     sortField: currentSort.field,
     sortDirection: currentSort.direction
   };
@@ -366,6 +405,8 @@ function openAddContactModal() {
   document.getElementById('modalTitle').textContent = 'Add New Contact';
   contactForm.reset();
   document.getElementById('contactTag').value = 'no action';
+  document.getElementById('contactRelationship').value = 'unassessed';
+  document.getElementById('contactLikelihood').value = 'unrated';
   contactModal.style.display = 'block';
 }
 
@@ -380,6 +421,8 @@ async function saveContact(event) {
     email: document.getElementById('contactEmail').value,
     comments: document.getElementById('contactComments').value,
     tag: document.getElementById('contactTag').value,
+    relationship: document.getElementById('contactRelationship').value,
+    likelihood: document.getElementById('contactLikelihood').value,
     followUpDate: document.getElementById('contactFollowUpDate').value || null,
     followUpRequired: document.getElementById('contactFollowUpRequired').checked,
     followUpNotes: document.getElementById('contactFollowUpNotes').value,
@@ -551,8 +594,8 @@ function setupEventListeners() {
     filterContacts(e.target.value);
   });
 
-  // Tag filter checkboxes
-  document.querySelectorAll('.tag-filter').forEach(checkbox => {
+  // Tag, relationship and likelihood filter checkboxes
+  document.querySelectorAll('.tag-filter, .relationship-filter, .likelihood-filter').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
       filterContacts(searchInput.value);
     });
@@ -641,6 +684,11 @@ function updateDeleteButtonVisibility() {
   deleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
   bulkTagSelect.style.display = hasSelection ? 'inline-block' : 'none';
   bulkTagBtn.style.display = hasSelection ? 'inline-block' : 'none';
+  ['bulkRelationshipSelect', 'bulkLikelihoodSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = hasSelection ? 'inline-block' : 'none';
+    if (!hasSelection) el.value = '';
+  });
   if (!hasSelection) bulkTagSelect.value = '';
 
   // Update select all checkbox state
@@ -705,6 +753,8 @@ async function deleteSelectedContacts() {
 function updateTagCounts() {
   const term = searchInput.value.toLowerCase();
   const counts = { 'follow up': 0, 'waiting for response': 0, 'no action': 0 };
+  const relationshipCounts = { 'referral source': 0, 'connector': 0, 'both': 0, 'unassessed': 0 };
+  const likelihoodCounts = { 'high': 0, 'medium': 0, 'low': 0, 'unrated': 0 };
 
   contacts.forEach(contact => {
     const matchesSearch = !term || (
@@ -713,9 +763,10 @@ function updateTagCounts() {
       (contact.title && contact.title.toLowerCase().includes(term)) ||
       contact.tag.toLowerCase().includes(term)
     );
-    if (matchesSearch && counts.hasOwnProperty(contact.tag)) {
-      counts[contact.tag]++;
-    }
+    if (!matchesSearch) return;
+    if (counts.hasOwnProperty(contact.tag)) counts[contact.tag]++;
+    if (relationshipCounts.hasOwnProperty(getRelationship(contact))) relationshipCounts[getRelationship(contact)]++;
+    if (likelihoodCounts.hasOwnProperty(getLikelihood(contact))) likelihoodCounts[getLikelihood(contact)]++;
   });
 
   const fuEl = document.getElementById('countFollowUp');
@@ -724,6 +775,12 @@ function updateTagCounts() {
   if (fuEl) fuEl.textContent = counts['follow up'];
   if (wEl)  wEl.textContent  = counts['waiting for response'];
   if (naEl) naEl.textContent = counts['no action'];
+  document.querySelectorAll('[data-count-relationship]').forEach(el => {
+    el.textContent = relationshipCounts[el.dataset.countRelationship] || 0;
+  });
+  document.querySelectorAll('[data-count-likelihood]').forEach(el => {
+    el.textContent = likelihoodCounts[el.dataset.countLikelihood] || 0;
+  });
 }
 
 // Export visible contacts to CSV
@@ -733,12 +790,14 @@ function exportContacts() {
     return;
   }
 
-  const headers = ['Name', 'Company', 'Title', 'Email', 'Tag', 'Follow-up Date', 'Follow-up Notes', 'Date of Last Contact', 'Comments'];
+  const headers = ['Name', 'Company', 'Title', 'Email', 'Relationship', 'Likelihood', 'Tag', 'Follow-up Date', 'Follow-up Notes', 'Date of Last Contact', 'Comments'];
   const rows = visibleContacts.map(c => [
     c.name || '',
     c.company || '',
     c.title || '',
     c.email || '',
+    RELATIONSHIP_LABELS[getRelationship(c)] || getRelationship(c),
+    LIKELIHOOD_LABELS[getLikelihood(c)] || getLikelihood(c),
     c.tag || '',
     c.followUpDate || '',
     c.followUpNotes || '',
@@ -757,12 +816,20 @@ function exportContacts() {
   showToast(`Exported ${visibleContacts.length} contact${visibleContacts.length !== 1 ? 's' : ''}`, 'success');
 }
 
-// Bulk-update tag for all selected contacts
+// Bulk-update tag, relationship and/or likelihood for all selected contacts
 async function bulkUpdateTag() {
-  const select = document.getElementById('bulkTagSelect');
-  const newTag = select.value;
-  if (!newTag) {
-    showToast('Select a tag to apply', 'info');
+  const tagSelect = document.getElementById('bulkTagSelect');
+  const relSelect = document.getElementById('bulkRelationshipSelect');
+  const likSelect = document.getElementById('bulkLikelihoodSelect');
+
+  // Only apply the dropdowns the user actually set
+  const changes = {};
+  if (tagSelect.value) changes.tag = tagSelect.value;
+  if (relSelect.value) changes.relationship = relSelect.value;
+  if (likSelect.value) changes.likelihood = likSelect.value;
+
+  if (Object.keys(changes).length === 0) {
+    showToast('Choose a tag, relationship or likelihood to apply', 'info');
     return;
   }
 
@@ -770,29 +837,42 @@ async function bulkUpdateTag() {
   if (selectedIds.length === 0) return;
 
   try {
-    await Promise.all(selectedIds.map(id => {
+    const responses = await Promise.all(selectedIds.map(id => {
       const contact = contacts.find(c => c.id === id);
-      if (!contact) return Promise.resolve();
+      if (!contact) return Promise.resolve(null);
       return fetch(`/api/contacts/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...contact, tag: newTag })
+        body: JSON.stringify({ ...contact, ...changes })
       });
     }));
 
-    selectedIds.forEach(id => {
-      const contact = contacts.find(c => c.id === id);
-      if (contact) contact.tag = newTag;
-    });
+    // Update local copies from what the server actually saved
+    let failed = 0;
+    await Promise.all(responses.map(async (response, i) => {
+      if (!response) return;
+      if (!response.ok) { failed++; return; }
+      const saved = await response.json();
+      const idx = contacts.findIndex(c => c.id === selectedIds[i]);
+      if (idx !== -1) contacts[idx] = saved;
+    }));
 
-    select.value = '';
+    tagSelect.value = '';
+    relSelect.value = '';
+    likSelect.value = '';
     document.getElementById('selectAllCheckbox').checked = false;
     document.getElementById('selectAllCheckbox').indeterminate = false;
     filterContacts(searchInput.value);
-    showToast(`Updated tag for ${selectedIds.length} contact${selectedIds.length !== 1 ? 's' : ''}`, 'success');
+    updateDeleteButtonVisibility();
+
+    if (failed > 0) {
+      showToast(`Failed to update ${failed} contact${failed !== 1 ? 's' : ''}`, 'error');
+    } else {
+      showToast(`Updated ${selectedIds.length} contact${selectedIds.length !== 1 ? 's' : ''}`, 'success');
+    }
   } catch (error) {
-    console.error('Failed to bulk update tags:', error);
-    showToast('Failed to update some tags', 'error');
+    console.error('Failed to bulk update contacts:', error);
+    showToast('Failed to update some contacts', 'error');
   }
 }
 
