@@ -212,9 +212,7 @@ function renderContacts(filteredContacts = null) {
     const isOverdue = contact.tag === 'follow up' && contact.followUpDate && contact.followUpDate < today;
 
     const relComments = contact.relationshipComments || '';
-    const truncatedRelComments = relComments
-      ? (relComments.length > 50 ? escapeHtml(relComments.substring(0, 50)) + '...' : escapeHtml(relComments))
-      : '-';
+    const relCommentsHtml = formatRelComments(relComments);
 
     const truncatedNotes = contact.followUpNotes
       ? (contact.followUpNotes.length > 50
@@ -252,7 +250,7 @@ function renderContacts(filteredContacts = null) {
         <td>${escapeHtml(contact.title) || '-'}</td>
         <td class="inline-cell">${renderInlineSelect(contact.id, 'relationship', getRelationship(contact), RELATIONSHIP_LABELS)}</td>
         <td class="inline-cell">${renderInlineSelect(contact.id, 'likelihood', getLikelihood(contact), LIKELIHOOD_LABELS)}</td>
-        <td class="inline-cell inline-comment" tabindex="0" data-id="${contact.id}" title="${escapeAttr(relComments || 'Click to add a comment')}">${truncatedRelComments}</td>
+        <td class="inline-cell inline-comment" tabindex="0" data-id="${contact.id}" title="${escapeAttr(relComments || 'Click to add a comment')}">${relCommentsHtml}</td>
         <td>${lastContactDate || '-'}</td>
         <td title="${escapeHtml(contactNotes)}">${escapeHtml(contactNotes)}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
@@ -346,10 +344,13 @@ async function onInlineSelectChange(select) {
   }
 }
 
+// Relationship comments show up to 4 lines in the list (CSS clamps the rest)
+function formatRelComments(text) {
+  return text ? `<div class="rel-comment-text">${escapeHtml(text)}</div>` : '-';
+}
+
 function renderInlineCommentCell(cell, text) {
-  cell.innerHTML = text
-    ? (text.length > 50 ? escapeHtml(text.substring(0, 50)) + '...' : escapeHtml(text))
-    : '-';
+  cell.innerHTML = formatRelComments(text);
   cell.title = text || 'Click to add a comment';
 }
 
@@ -362,7 +363,7 @@ function openInlineCommentEditor(cell) {
   if (!contact) return;
   const original = contact.relationshipComments || '';
 
-  cell.innerHTML = '<textarea class="inline-comment-input" rows="2"></textarea>';
+  cell.innerHTML = '<textarea class="inline-comment-input" rows="4"></textarea>';
   const textarea = cell.querySelector('textarea');
   textarea.value = original;
   textarea.focus();

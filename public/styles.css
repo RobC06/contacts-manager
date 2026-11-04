@@ -405,6 +405,18 @@ body.dark-mode .category-badge.relationship-none {
 
 .inline-comment {
   cursor: text;
+  min-width: 220px;
+}
+
+/* Show up to 4 lines of relationship comments, then "..." */
+.rel-comment-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .inline-comment:hover {
