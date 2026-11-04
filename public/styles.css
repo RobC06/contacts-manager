@@ -365,6 +365,58 @@ td {
   color: #80868b;
 }
 
+/* Inline-editable cells on the contact list */
+.inline-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  padding: 4px 22px 4px 12px;
+  font-family: inherit;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%235f6368'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* Keep the full label visible when the table is squeezed */
+.inline-select[data-field="relationship"] {
+  min-width: 150px;
+}
+
+.inline-select[data-field="likelihood"] {
+  min-width: 125px;
+}
+
+.inline-select:hover,
+.inline-select:focus {
+  border-color: currentColor;
+  outline: none;
+}
+
+.inline-comment {
+  cursor: text;
+}
+
+.inline-comment:hover {
+  background-color: rgba(26, 115, 232, 0.06);
+}
+
+.inline-comment-input {
+  width: 100%;
+  min-width: 200px;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 4px 6px;
+  border: 1px solid #1a73e8;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+body.dark-mode .inline-comment-input {
+  background: #3a3f4a;
+  color: #e8eaed;
+}
+
 body.dark-mode .category-badge.relationship-unassessed,
 body.dark-mode .category-badge.likelihood-unrated {
   background-color: #3a3f4a;

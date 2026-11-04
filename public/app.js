@@ -3,6 +3,9 @@ let contacts = [];
 let currentSort = { field: null, direction: 'asc' };
 let visibleContacts = [];   // tracks what's currently rendered (for export)
 let quickLogContactId = null;
+// Contacts edited inline stay visible until the user changes a filter or search,
+// even if the edit moved them outside the current relationship/likelihood filter
+const inlineEditedIds = new Set();
 
 // Business-development categories: display labels and sort order (best first)
 const RELATIONSHIP_LABELS = {
@@ -246,9 +249,9 @@ function renderContacts(filteredContacts = null) {
         <td><strong>${escapeHtml(contact.name)}</strong></td>
         <td>${escapeHtml(contact.company) || '-'}</td>
         <td>${escapeHtml(contact.title) || '-'}</td>
-        <td><span class="category-badge relationship-${getRelationship(contact).replace(/\s+/g, '-')}">${RELATIONSHIP_LABELS[getRelationship(contact)] || escapeHtml(getRelationship(contact))}</span></td>
-        <td><span class="category-badge likelihood-${getLikelihood(contact)}">${LIKELIHOOD_LABELS[getLikelihood(contact)] || escapeHtml(getLikelihood(contact))}</span></td>
-        <td title="${escapeHtml(relComments)}">${truncatedRelComments}</td>
+        <td class="inline-cell">${renderInlineSelect(contact.id, 'relationship', getRelationship(contact), RELATIONSHIP_LABELS)}</td>
+        <td class="inline-cell">${renderInlineSelect(contact.id, 'likelihood', getLikelihood(contact), LIKELIHOOD_LABELS)}</td>
+        <td class="inline-cell inline-comment" tabindex="0" data-id="${contact.id}" title="${escapeAttr(relComments || 'Click to add a comment')}">${truncatedRelComments}</td>
         <td>${lastContactDate || '-'}</td>
         <td title="${escapeHtml(contactNotes)}">${escapeHtml(contactNotes)}</td>
         <td><span class="tag ${tagClass}">${contact.tag}</span></td>
@@ -261,6 +264,7 @@ function renderContacts(filteredContacts = null) {
   // Add click listeners to rows (except checkboxes and quick-log buttons)
   document.querySelectorAll('#contactsTableBody tr').forEach(row => {
     row.addEventListener('click', (e) => {
+      if (e.target.closest('.inline-cell')) return; // inline-editable cells don't open the contact
       if (!e.target.classList.contains('contact-checkbox') && !e.target.classList.contains('quick-log-btn')) {
         const contactId = row.dataset.id;
         viewContact(contactId);
@@ -280,6 +284,112 @@ function renderContacts(filteredContacts = null) {
       openQuickLog(btn.dataset.id, btn.dataset.name);
     });
   });
+
+  // Inline editing: relationship / likelihood dropdowns and relationship comments
+  document.querySelectorAll('.inline-select').forEach(select => {
+    select.addEventListener('change', () => onInlineSelectChange(select));
+  });
+  document.querySelectorAll('.inline-comment').forEach(cell => {
+    cell.addEventListener('focus', () => openInlineCommentEditor(cell));
+  });
+}
+
+// ── Inline editing ────────────────────────────────────────────
+
+// Dropdown styled as the colored badge for a relationship/likelihood value
+function renderInlineSelect(contactId, field, value, labels) {
+  const options = Object.entries(labels).map(([v, label]) =>
+    `<option value="${v}"${v === value ? ' selected' : ''}>${label}</option>`
+  ).join('');
+  return `<select class="inline-select category-badge ${field}-${value.replace(/\s+/g, '-')}" data-id="${contactId}" data-field="${field}" title="Change ${field}">${options}</select>`;
+}
+
+// Save one field of one contact. Sends only that field so nothing else is overwritten.
+async function saveInlineField(contactId, field, value) {
+  const contact = contacts.find(c => c.id === contactId);
+  if (!contact) return false;
+  try {
+    const response = await fetch(`/api/contacts/${contactId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value })
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const saved = await response.json();
+    contact[field] = saved[field];
+    inlineEditedIds.add(contactId);
+    updateTagCounts();
+    showToast('Saved', 'success');
+    return true;
+  } catch (error) {
+    console.error(`Failed to save ${field}:`, error);
+    showToast('Failed to save change', 'error');
+    return false;
+  }
+}
+
+async function onInlineSelectChange(select) {
+  const { id, field } = select.dataset;
+  const contact = contacts.find(c => c.id === id);
+  const oldValue = field === 'relationship' ? getRelationship(contact) : getLikelihood(contact);
+  const newValue = select.value;
+  const setStyle = value => {
+    select.className = `inline-select category-badge ${field}-${value.replace(/\s+/g, '-')}`;
+  };
+
+  setStyle(newValue);
+  const ok = await saveInlineField(id, field, newValue);
+  if (!ok) {
+    select.value = oldValue;
+    setStyle(oldValue);
+  }
+}
+
+function renderInlineCommentCell(cell, text) {
+  cell.innerHTML = text
+    ? (text.length > 50 ? escapeHtml(text.substring(0, 50)) + '...' : escapeHtml(text))
+    : '-';
+  cell.title = text || 'Click to add a comment';
+}
+
+// Turn the comment cell into a text box. Enter or clicking away saves, Esc cancels,
+// Shift+Enter adds a line break.
+function openInlineCommentEditor(cell) {
+  if (cell.querySelector('textarea')) return;
+  const id = cell.dataset.id;
+  const contact = contacts.find(c => c.id === id);
+  if (!contact) return;
+  const original = contact.relationshipComments || '';
+
+  cell.innerHTML = '<textarea class="inline-comment-input" rows="2"></textarea>';
+  const textarea = cell.querySelector('textarea');
+  textarea.value = original;
+  textarea.focus();
+
+  let finished = false;
+  const finish = async (save) => {
+    if (finished) return;
+    finished = true;
+    const value = textarea.value;
+    if (save && value !== original) {
+      textarea.disabled = true;
+      const ok = await saveInlineField(id, 'relationshipComments', value);
+      renderInlineCommentCell(cell, ok ? value : original);
+    } else {
+      renderInlineCommentCell(cell, original);
+    }
+  };
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      finish(true);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      finish(false);
+    }
+  });
+  textarea.addEventListener('blur', () => finish(true));
 }
 
 // Get last contact date from communications
@@ -316,8 +426,9 @@ function filterContacts(searchTerm = '') {
     const matchesTagFilter = selectedTags.length === 0 || selectedTags.includes(contact.tag);
 
     // Check relationship and likelihood filter matches (none checked = no filtering)
-    const matchesRelationship = selectedRelationships.length === 0 || selectedRelationships.includes(getRelationship(contact));
-    const matchesLikelihood = selectedLikelihoods.length === 0 || selectedLikelihoods.includes(getLikelihood(contact));
+    const keptAfterInlineEdit = inlineEditedIds.has(contact.id);
+    const matchesRelationship = keptAfterInlineEdit || selectedRelationships.length === 0 || selectedRelationships.includes(getRelationship(contact));
+    const matchesLikelihood = keptAfterInlineEdit || selectedLikelihoods.length === 0 || selectedLikelihoods.includes(getLikelihood(contact));
 
     return matchesSearch && matchesTagFilter && matchesRelationship && matchesLikelihood;
   });
@@ -598,12 +709,14 @@ async function sendTestEmail() {
 function setupEventListeners() {
   // Search
   searchInput.addEventListener('input', (e) => {
+    inlineEditedIds.clear();
     filterContacts(e.target.value);
   });
 
   // Tag, relationship and likelihood filter checkboxes
   document.querySelectorAll('.tag-filter, .relationship-filter, .likelihood-filter').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
+      inlineEditedIds.clear();
       filterContacts(searchInput.value);
     });
   });
@@ -976,6 +1089,11 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Escape text for use inside a double-quoted HTML attribute
+function escapeAttr(text) {
+  return escapeHtml(text).replace(/"/g, '&quot;');
 }
 
 // Column resizing functionality
