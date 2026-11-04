@@ -359,6 +359,16 @@ td {
   color: #c5221f;
 }
 
+.category-badge.relationship-none {
+  background-color: #e8eaed;
+  color: #3c4043;
+}
+
+body.dark-mode .category-badge.relationship-none {
+  background-color: #4a4f5a;
+  color: #e8eaed;
+}
+
 .category-badge.relationship-unassessed,
 .category-badge.likelihood-unrated {
   background-color: #f1f3f4;

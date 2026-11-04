@@ -50,7 +50,7 @@ const contactSchema = new mongoose.Schema({
   // Business-development categorization
   relationship: {
     type: String,
-    enum: ['referral source', 'connector', 'both', 'unassessed'],
+    enum: ['referral source', 'connector', 'both', 'none', 'unassessed'],
     default: 'unassessed'
   },
   likelihood: {

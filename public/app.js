@@ -12,9 +12,10 @@ const RELATIONSHIP_LABELS = {
   'referral source': 'Referral Source',
   'connector': 'Connector',
   'both': 'Both',
+  'none': 'None',
   'unassessed': 'Not Yet Assessed'
 };
-const RELATIONSHIP_RANK = { 'both': 0, 'referral source': 1, 'connector': 2, 'unassessed': 3 };
+const RELATIONSHIP_RANK = { 'both': 0, 'referral source': 1, 'connector': 2, 'none': 3, 'unassessed': 4 };
 const LIKELIHOOD_LABELS = {
   'high': 'High',
   'medium': 'Medium',
@@ -873,7 +874,7 @@ async function deleteSelectedContacts() {
 function updateTagCounts() {
   const term = searchInput.value.toLowerCase();
   const counts = { 'follow up': 0, 'waiting for response': 0, 'no action': 0 };
-  const relationshipCounts = { 'referral source': 0, 'connector': 0, 'both': 0, 'unassessed': 0 };
+  const relationshipCounts = { 'referral source': 0, 'connector': 0, 'both': 0, 'none': 0, 'unassessed': 0 };
   const likelihoodCounts = { 'high': 0, 'medium': 0, 'low': 0, 'unrated': 0 };
 
   contacts.forEach(contact => {
